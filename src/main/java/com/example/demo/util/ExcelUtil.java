@@ -197,6 +197,24 @@ public class ExcelUtil {
 	}
 
 	/**
+	 * 讀取多張表資料
+	 * 
+	 * @throws IOException
+	 */
+	public static Map<String, List<Map<String, String>>> readExcelData(InputStream inputStream,
+			List<String> sheetNameList) throws IOException {
+		Map<String, List<Map<String, String>>> result = new HashMap<>();
+		Workbook workbook = new XSSFWorkbook(inputStream);
+		sheetNameList.stream().forEach(sheetName -> {
+			log.debug("Sheet Name:{}", sheetName);
+			List<Map<String, String>> list = new ArrayList<>();
+			processWorkbook(workbook, sheetName, list);
+			result.put(sheetName, list);
+		});
+		return result;
+	}
+
+	/**
 	 * 處理 多個 sheet
 	 * 
 	 * @param Workbook  workbook
@@ -224,7 +242,7 @@ public class ExcelUtil {
 			int cellIndex = 0;
 			while (titleCellIterator.hasNext()) {
 				String key = StringUtils.trim(parseCellValue(titleCellIterator.next()));
-				
+
 				String value = parseCellValue(row.getCell(cellIndex));
 				if (StringUtils.isNotBlank(key)) {
 					map.put(key, value);
@@ -238,50 +256,27 @@ public class ExcelUtil {
 	}
 
 	/**
-	 * 讀取多張表資料
-	 * 
-	 * @throws IOException
-	 */
-	public static Map<String, List<Map<String, String>>> readExcelData(InputStream inputStream,
-			List<String> sheetNameList) throws IOException {
-
-		Map<String, List<Map<String, String>>> result = new HashMap<>();
-
-		Workbook workbook = new XSSFWorkbook(inputStream);
-
-		sheetNameList.stream().forEach(sheetName -> {
-			log.debug("Sheet Name:{}", sheetName);
-			List<Map<String, String>> list = new ArrayList<>();
-			processWorkbook(workbook, sheetName, list);
-			result.put(sheetName, list);
-		});
-
-		return result;
-
-	}
-
-	/**
 	 * 轉換單元格內的值
 	 */
 	private static String parseCellValue(Cell cell) {
 		String cellValue = "";
-		
+
 		if (Objects.isNull(cell)) {
 			return cellValue;
 		}
-		
+
 		switch (cell.getCellType()) {
 		case STRING:
 			cellValue = cell.getStringCellValue();
 			break;
 		case NUMERIC:
 			double numericValue = cell.getNumericCellValue();
-            // 若為整數，轉換為整數格式
-            if (numericValue % 1 == 0) {
-                cellValue = String.valueOf((long) numericValue);
-            } else {
-                cellValue = String.valueOf(numericValue);
-            }
+			// 若為整數，轉換為整數格式
+			if (numericValue % 1 == 0) {
+				cellValue = String.valueOf((long) numericValue);
+			} else {
+				cellValue = String.valueOf(numericValue);
+			}
 			break;
 		case BOOLEAN:
 			cellValue = String.valueOf(cell.getBooleanCellValue());
@@ -333,33 +328,35 @@ public class ExcelUtil {
 			log.error("轉換錯誤");
 		}
 	}
-	
-	/**
-     * 轉換行號與欄號為 Excel Cell Address (如 A1, B2, C3)
-     * @param row Excel 行號 (從 1 開始)
-     * @param col Excel 欄號 (從 1 開始)
-     * @return 例如 "B2", "C3"
-     */
-    public static String convertNumToAddress(Integer row, Integer col) {
-        if (row == null || col == null || row < 1 || col < 1) {
-            return "Invalid Cell"; // 避免 null 或非法數值
-        }
-        return convertColumnToLetter(col) + row;
-    }
 
-    /**
-     * 將數字欄號轉換為 Excel 字母 (例如: 1 -> A, 2 -> B, 27 -> AA)
-     * @param col 欄號 (從 1 開始)
-     * @return Excel 欄位名稱 (如 "A", "B", "AA", "AB")
-     */
-    private static String convertColumnToLetter(int col) {
-        StringBuilder columnName = new StringBuilder();
-        while (col > 0) {
-            col--; // 調整索引 (Excel 是 1-based)
-            columnName.insert(0, (char) ('A' + (col % 26)));
-            col /= 26;
-        }
-        return columnName.toString();
-    }
+	/**
+	 * 轉換行號與欄號為 Excel Cell Address (如 A1, B2, C3)
+	 * 
+	 * @param row Excel 行號 (從 1 開始)
+	 * @param col Excel 欄號 (從 1 開始)
+	 * @return 例如 "B2", "C3"
+	 */
+	public static String convertNumToAddress(Integer row, Integer col) {
+		if (row == null || col == null || row < 1 || col < 1) {
+			return "Invalid Cell"; // 避免 null 或非法數值
+		}
+		return convertColumnToLetter(col) + row;
+	}
+
+	/**
+	 * 將數字欄號轉換為 Excel 字母 (例如: 1 -> A, 2 -> B, 27 -> AA)
+	 * 
+	 * @param col 欄號 (從 1 開始)
+	 * @return Excel 欄位名稱 (如 "A", "B", "AA", "AB")
+	 */
+	private static String convertColumnToLetter(int col) {
+		StringBuilder columnName = new StringBuilder();
+		while (col > 0) {
+			col--; // 調整索引 (Excel 是 1-based)
+			columnName.insert(0, (char) ('A' + (col % 26)));
+			col /= 26;
+		}
+		return columnName.toString();
+	}
 
 }

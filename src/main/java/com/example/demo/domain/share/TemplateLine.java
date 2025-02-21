@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TemplateLine {
+	
+	private String sheetName; // Sheet Name
 
 	private String mappingFieldName; // 欄位名稱
 

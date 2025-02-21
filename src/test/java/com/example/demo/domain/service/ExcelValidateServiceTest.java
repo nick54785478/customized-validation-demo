@@ -33,10 +33,16 @@ class ExcelValidateServiceTest {
 		ContextRoot contextRoot = new ContextRoot();
 		contextRoot.setSheet(sheet);
 
+		Map<String, List<Map<String, String>>> sheetMap = Map.of("USER_PROFILE", sheet);
+
 		List<ValidationPolicy> policies = List.of(
-				new ValidationPolicy("ROW", "ENFORCE_ROW_VALIDATION", "name", "#checkedValue!=''"),
-				new ValidationPolicy("ROW", "ENFORCE_ROW_VALIDATION", "age", "#checkedValue!=''"),
-				new ValidationPolicy("ROW", "ENFORCE_ROW_VALIDATION", "sex", "#checkedValue!=''"));
+				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "name",
+						"#checkedValue!=''", "'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"),
+				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "age",
+						"#checkedValue!=''", "'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"),
+				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "sex",
+						"#checkedValue!=''", "'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"));
+		contextRoot.setSheetMap(sheetMap);
 
 		List<ValidateErrorProperty> validateExcelData = excelValidateService.validateExcelData(contextRoot, policies,
 				new ArrayList<>());

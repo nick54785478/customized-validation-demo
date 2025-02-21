@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -40,11 +41,17 @@ public class UploadCommandService {
 	 */
 	public void upload(UploadTemplateCommand command, MultipartFile file) throws IOException {
 
-		List<Map<String, String>> excelData = ExcelUtil.readExcelData(file.getInputStream(), command.getName());
-		ContextRoot contextRoot = ContextRoot.builder().sheet(excelData).build();
+//		List<Map<String, String>> excelData = ExcelUtil.readExcelData(file.getInputStream(), command.getName());
 
 		// 取出驗證規則
 		List<ValidationPolicy> policyList = validationPolicyRepository.findByTemplateName(command.getName());
+		List<String> sheetNameList = policyList.stream().map(ValidationPolicy::getTemplateSheetName)
+				.collect(Collectors.toList());
+		Map<String, List<Map<String, String>>> excelData = ExcelUtil.readExcelData(file.getInputStream(),
+				sheetNameList);
+
+		// 讀取多張表
+		ContextRoot contextRoot = ContextRoot.builder().sheetMap(excelData).build();
 
 		// 客製驗證
 		List<ValidateErrorProperty> vepList = excelValidateService.validateExcelData(contextRoot, policyList,

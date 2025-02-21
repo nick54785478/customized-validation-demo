@@ -1,6 +1,5 @@
 package com.example.demo.domain.service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +14,8 @@ import org.springframework.stereotype.Service;
 
 import com.example.demo.domain.policy.aggregate.ValidationPolicy;
 import com.example.demo.domain.share.ContextRoot;
-import com.example.demo.domain.share.SheetContextRoot;
 import com.example.demo.domain.share.TemplateLine;
 import com.example.demo.share.bean.ValidateErrorProperty;
-import com.google.common.primitives.Ints;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,77 +40,83 @@ public class ExcelValidateService {
 			List<ValidateErrorProperty> vepList) {
 
 		// 紀錄 Template Line
-		List<Map<String, String>> dataSheet = contextRoot.getSheet();
+		Map<String, List<Map<String, String>>> sheet = contextRoot.getSheetMap();
+		
+		// 遍歷 SheetMap
+		sheet.forEach((sheetName, dataSheet) -> {
 
-		// 生成 TemplateMap Map<mappingFieldName, TemplateLine>
-		Map<String, TemplateLine> templateMap = this.generateTemplateMap(policyList);
+			// 根據 SheetName 過濾出該 Policy 清單
+			List<ValidationPolicy> filteredList = policyList.stream()
+					.filter(e -> StringUtils.equals(sheetName, e.getTemplateSheetName())).collect(Collectors.toList());
 
-		for (int i = 0; i < dataSheet.size(); i++) {
+			// 生成 TemplateMap Map<mappingFieldName, TemplateLine>
+			Map<String, TemplateLine> templateMap = this.generateTemplateMap(filteredList);
+			contextRoot.setSheet(dataSheet);
+			for (int i = 0; i < dataSheet.size(); i++) {
 
-			// 設置當前 row
-			contextRoot.setCurrentRow(dataSheet.get(i));
+				// 設置當前 row
+				contextRoot.setCurrentRow(dataSheet.get(i));
 
-			// 將 Policy 根據 MappingFieldName 轉換為 Map<MappingFieldName, policy>
-			Map<String, ValidationPolicy> validateMap = policyList.stream()
-					.collect(Collectors.toMap(ValidationPolicy::getMappingFieldName, Function.identity()));
+				// 將 Policy 根據 MappingFieldName 轉換為 Map<MappingFieldName, policy>
+				Map<String, ValidationPolicy> validateMap = filteredList.stream()
+						.collect(Collectors.toMap(ValidationPolicy::getMappingFieldName, Function.identity()));
 
-			// 遍歷當前 row (Map)
-			for (Map.Entry<String, String> entry : contextRoot.getCurrentRow().entrySet()) {
-				String k = entry.getKey(); // MapFieldName
+				// 遍歷當前 row (Map)
+				for (Map.Entry<String, String> entry : contextRoot.getCurrentRow().entrySet()) {
+					String k = entry.getKey(); // MapFieldName
 
-				// 取得 Policy
-				if (validateMap.containsKey(k)) {
-					// 該 CellValue 的檢核規則
-					ValidationPolicy policy = validateMap.get(k);
-					// 取得 MappingFieldName
-					String mappingFieldName = policy.getMappingFieldName();
+					// 取得 Policy
+					if (validateMap.containsKey(k)) {
+						// 該 CellValue 的檢核規則
+						ValidationPolicy policy = validateMap.get(k);
+						// 取得 MappingFieldName
+						String mappingFieldName = policy.getMappingFieldName();
 
-					// 當欄位為空但毋需進行客製驗證的檢查時，跳過
-					if (!StringUtils.equalsIgnoreCase(policy.getRule(), "ENFORCE_ROW_VALIDATION")
-							&& isRowFieldBlank(contextRoot, mappingFieldName)) {
-						continue;
-					}
+						// 當欄位為空但毋需進行客製驗證的檢查時，跳過
+						if (!StringUtils.equalsIgnoreCase(policy.getRule(), "ENFORCE_ROW_VALIDATION")
+								&& isRowFieldBlank(contextRoot, mappingFieldName)) {
+							continue;
+						}
 
-					// 設置當前處理的欄位值。
-					this.setSingleMappingForRowCellValue(contextRoot, mappingFieldName);
+						// 設置當前處理的欄位值。
+						this.setSingleMappingForRowCellValue(contextRoot, mappingFieldName);
 
-					// 取得預處理表達式，可擴展替換特殊標記
-					String expression = preProcessExpression(policy.getExpression());
-					log.info("[validateExcelData] ROW after preprocessor: {}, {}", mappingFieldName, expression);
+						// 取得預處理表達式，可擴展替換特殊標記
+						String expression = preProcessExpression(policy.getExpression());
+						log.info("[validateExcelData] ROW after preprocessor: {}, {}", mappingFieldName, expression);
 
-					Boolean expressionValue = evaluateExpression(expression, contextRoot);
-					if (!Boolean.TRUE.equals(expressionValue)) {
-						// 格式化驗證錯誤資訊，由於遍歷是從 0 開始，所以此處要輸入 i+1
-						ValidateErrorProperty vep = formatRowValidateError(templateMap, policy, i + 1);
-						vepList.add(vep);
+						Boolean expressionValue = evaluateExpression(expression, contextRoot);
+						if (!Boolean.TRUE.equals(expressionValue)) {
+							// 格式化驗證錯誤資訊，由於遍歷是從 0 開始，所以此處要輸入 i+1
+							ValidateErrorProperty vep = formatRowValidateError(templateMap, policy, i + 1);
+							vepList.add(vep);
+						}
 					}
 				}
 			}
-		}
+		});
 		return vepList;
 	}
 
-	/**
-	 * 對整個 SHEET 的資料驗證
-	 */
-	public List<ValidateErrorProperty> validateExcelSheetData(SheetContextRoot contextRoot,
-			List<ValidationPolicy> policyList, List<ValidateErrorProperty> vepList) {
-		StandardEvaluationContext context = new StandardEvaluationContext();
-
-		// 紀錄 Template Line
-		List<Map<String, String>> dataSheet = contextRoot.getSheet();
-
-		// 生成 TemplateMap Map<mappingFieldName, TemplateLine>
-		Map<String, TemplateLine> templateMap = this.generateTemplateMap(policyList);
-
-		// 過濾出針對 SHEET 做驗證的 policy
-		Map<String, ValidationPolicy> validateMap = policyList.stream()
-				.collect(Collectors.toMap(ValidationPolicy::getMappingFieldName, Function.identity()));
-
-		
-
-		return new ArrayList<>();
-	}
+//	/**
+//	 * 對整個 SHEET 的資料驗證
+//	 */
+//	public List<ValidateErrorProperty> validateExcelSheetData(SheetContextRoot contextRoot,
+//			List<ValidationPolicy> policyList, List<ValidateErrorProperty> vepList) {
+//		StandardEvaluationContext context = new StandardEvaluationContext();
+//
+//		// 紀錄 Template Line
+//		List<Map<String, String>> dataSheet = contextRoot.getSheet();
+//
+//		// 生成 TemplateMap Map<mappingFieldName, TemplateLine>
+//		Map<String, TemplateLine> templateMap = this.generateTemplateMap(policyList);
+//
+//		// 過濾出針對 SHEET 做驗證的 policy
+//		Map<String, ValidationPolicy> validateMap = policyList.stream()
+//				.collect(Collectors.toMap(ValidationPolicy::getMappingFieldName, Function.identity()));
+//
+//		return new ArrayList<>();
+//	}
 
 	/**
 	 * 建立 TemplateMap
@@ -127,7 +130,8 @@ public class ExcelValidateService {
 		// 動態建立 MappingFieldName -> TemplateLine 的對應關係
 		for (ValidationPolicy policy : policyList) {
 			String mappingFieldName = policy.getMappingFieldName();
-			templateMap.put(mappingFieldName, new TemplateLine(mappingFieldName, columnIndex));
+			templateMap.put(mappingFieldName,
+					new TemplateLine(policy.getTemplateSheetName(), mappingFieldName, columnIndex));
 			columnIndex++;
 		}
 
@@ -152,11 +156,13 @@ public class ExcelValidateService {
 	 *
 	 * @param express      錯誤訊息模板 (可以包含 SpEL 表達式)
 	 * @param excelAddress Excel 格式的欄位地址 (如 "B1")
+	 * @param sheetName    Sheet Name
 	 * @return 解析後的錯誤訊息
 	 */
-	private static String evaluateErrorMsg(String express, String excelAddress) {
+	private static String evaluateErrorMsg(String express, String excelAddress, String sheetName) {
 		StandardEvaluationContext context = new StandardEvaluationContext();
 		context.setVariable("excelAddress", excelAddress); // 設定變數
+		context.setVariable("sheetName", sheetName); // SheetName
 		return parser.parseExpression(express).getValue(context, String.class);
 	}
 
@@ -219,7 +225,7 @@ public class ExcelValidateService {
 		String excelAddress = templateLine.convertNumToAddress(rowIndex + 1, templateLine.getDataColumnNum());
 		log.debug("rowIndex:{}, excelAddress:{}", rowIndex, excelAddress);
 		// 使用 SpEL 解析錯誤訊息
-		String errorMessage = evaluateErrorMsg(policy.getErrorMessage(), excelAddress);
+		String errorMessage = evaluateErrorMsg(policy.getErrorMessage(), excelAddress, policy.getTemplateSheetName());
 		return new ValidateErrorProperty(policy.getRule(), rowIndex, errorMessage);
 	}
 

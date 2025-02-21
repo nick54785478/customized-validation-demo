@@ -55,11 +55,13 @@ public class ValidationPolicy {
 	@Column(name = "active_flag")
 	private YesNo activeFlag;
 
-	public ValidationPolicy(String type, String rule, String mappingFieldName, String expression) {
+	public ValidationPolicy(String type, String templateSheetName, String rule, String mappingFieldName, String expression, String errorMessage) {
 		this.type = type;
+		this.templateSheetName = templateSheetName;
 		this.mappingFieldName = mappingFieldName;
 		this.rule = rule;
 		this.expression = expression;
+		this.errorMessage = errorMessage;
 	}
 
 }
