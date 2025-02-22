@@ -3,6 +3,7 @@ package com.example.demo.domain.service;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,16 +33,17 @@ class ExcelValidateServiceTest {
 				Map.of("name", "李四", "age", "34", "sex", "男"), Map.of("name", "王五", "age", "28", "sex", ""));
 		ContextRoot contextRoot = new ContextRoot();
 		contextRoot.setSheet(sheet);
+		contextRoot.setParams(new LinkedHashMap<>());
 
 		Map<String, List<Map<String, String>>> sheetMap = Map.of("USER_PROFILE", sheet);
 
 		List<ValidationPolicy> policies = List.of(
-				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "name",
-						"#checkedValue!=''", "'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"),
-				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "age",
-						"#checkedValue!=''", "'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"),
-				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "sex",
-						"#checkedValue!=''", "'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"));
+				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "name", "#checkedValue!=''",
+						"'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"),
+				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "age", "#checkedValue!=''",
+						"'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"),
+				new ValidationPolicy("ROW", "USER_PROFILE", "ENFORCE_ROW_VALIDATION", "sex", "#checkedValue!=''",
+						"'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"));
 		contextRoot.setSheetMap(sheetMap);
 
 		List<ValidateErrorProperty> validateExcelData = excelValidateService.validateExcelData(contextRoot, policies,

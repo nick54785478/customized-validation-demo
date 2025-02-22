@@ -249,7 +249,7 @@ public class ExcelUtil {
 				}
 				cellIndex++;
 			}
-			log.info("map: {}", map);
+			log.debug("map: {}", map);
 			result.add(map);
 		}
 

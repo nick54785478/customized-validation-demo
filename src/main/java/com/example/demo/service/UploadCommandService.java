@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,17 +42,16 @@ public class UploadCommandService {
 	 */
 	public void upload(UploadTemplateCommand command, MultipartFile file) throws IOException {
 
-//		List<Map<String, String>> excelData = ExcelUtil.readExcelData(file.getInputStream(), command.getName());
-
 		// 取出驗證規則
 		List<ValidationPolicy> policyList = validationPolicyRepository.findByTemplateName(command.getName());
 		List<String> sheetNameList = policyList.stream().map(ValidationPolicy::getTemplateSheetName)
 				.collect(Collectors.toList());
+
+		// 讀取多張表資料
 		Map<String, List<Map<String, String>>> excelData = ExcelUtil.readExcelData(file.getInputStream(),
 				sheetNameList);
-
-		// 讀取多張表
-		ContextRoot contextRoot = ContextRoot.builder().sheetMap(excelData).build();
+		// 建立 ContextRoot
+		ContextRoot contextRoot = ContextRoot.builder().params(new LinkedHashMap<>()).sheetMap(excelData).build();
 
 		// 客製驗證
 		List<ValidateErrorProperty> vepList = excelValidateService.validateExcelData(contextRoot, policyList,
