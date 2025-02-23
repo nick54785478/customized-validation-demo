@@ -145,7 +145,7 @@ public class ExcelUtil {
 	 * 
 	 * @param sheet   工作表
 	 * @param rowIdx  index
-	 * @param rowData
+	 * @param rowData Row 資料
 	 */
 	private static void writeRow(XSSFSheet sheet, int rowIdx, Object[] rowData) {
 		XSSFRow row = sheet.createRow(rowIdx);
@@ -160,8 +160,8 @@ public class ExcelUtil {
 	/**
 	 * 設定 Excel Cell 值 (使用 Map 類型判斷)
 	 * 
-	 * @param cell Cell 資料
-	 * @param 類型
+	 * @param cell  Cell 資料
+	 * @param field 類型
 	 */
 	private static void setCellValue(XSSFCell cell, Object field) {
 		if (field == null) {
@@ -182,7 +182,7 @@ public class ExcelUtil {
 	}
 
 	/**
-	 * 讀取 Excel 單一 sheet資料
+	 * 讀取 Excel 單一 sheet 資料
 	 * 
 	 * @param inputStream : 資料流
 	 * @param sheetName   : 工作表名稱
@@ -199,8 +199,10 @@ public class ExcelUtil {
 	}
 
 	/**
-	 * 讀取多張表資料
+	 * 讀取 Excel 多張 sheet 資料
 	 * 
+	 * @param inputStream   資料流
+	 * @param sheetNameList SheetName 清單
 	 * @throws IOException
 	 */
 	public static Map<String, List<Map<String, String>>> readExcelData(InputStream inputStream,
@@ -224,12 +226,9 @@ public class ExcelUtil {
 	 * @param 處理後的資料
 	 */
 	private static void processWorkbook(Workbook workbook, String sheetName, List<Map<String, String>> result) {
-
 		Sheet sheet = workbook.getSheet(sheetName);
-
 		// 獲取第一列（標題列）
 		Row titleRow = sheet.getRow(0);
-
 		// 迭代列 (從第 2 列開始)
 		for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
 			// 此處期望 <Header, CellValue> 按照順序排序
@@ -260,6 +259,9 @@ public class ExcelUtil {
 
 	/**
 	 * 轉換單元格內的值
+	 * 
+	 * @param cell Cell 資料
+	 * @return String 轉換後資料
 	 */
 	private static String parseCellValue(Cell cell) {
 		String cellValue = "";
