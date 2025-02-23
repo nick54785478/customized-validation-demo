@@ -1,11 +1,9 @@
 package com.example.demo.domain.service;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -99,7 +97,8 @@ public class ExcelValidateService {
 							contextRoot.getParams().put(policy.getMappingFieldName(), obj);
 							context.setVariable(policy.getMappingFieldName(), obj);
 						} else {
-							// 處理 SHEET 的 Policy，取得預處理表達式，可擴展替換特殊標記
+							// 處理 SHEET 的 Policy
+							// 取得預處理表達式，可擴展替換特殊標記
 							String expression = preProcessExpression(policy.getExpression());
 							// 執行 Expression，並回傳 Map< rowIndex, errorMessage >
 							Map<Integer, String> expressionValue = (Map<Integer, String>) parser
@@ -108,7 +107,7 @@ public class ExcelValidateService {
 							if (expressionValue != null) {
 								TemplateLine templateLine = getTemplateLine(templateMap, policy.getMappingFieldName());
 								expressionValue.forEach((dataRowIndex, errorMessage) -> {
-									// 取得 ExcelAddress，這邊需 +1，因為是 1-based
+									// 取得 ExcelAddress，這邊需 +1 (要含標題的 row)，因為是 1-based
 									String excelAddress = ExcelAddressParser.convertNumToAddress(dataRowIndex + 1,
 											templateLine.getDataColumnNum());
 									ValidateErrorProperty vep = new ValidateErrorProperty();
@@ -215,7 +214,7 @@ public class ExcelValidateService {
 	 * @return String
 	 */
 	private static String preProcessExpression(String expression) {
-		// 可加強處理，例如替換特殊標記
+		// 可加強處理，例如: 替換特殊標記
 		return expression;
 	}
 
@@ -226,13 +225,14 @@ public class ExcelValidateService {
 	 * @param templateLineMap
 	 * @param policy
 	 * @param rowIndex
+	 * @return ValidateErrorProperty
 	 */
 	private static ValidateErrorProperty formatRowValidateError(StandardEvaluationContext context,
 			Map<String, TemplateLine> templateLineMap, ValidationPolicy policy, int rowIndex) {
 		// 取得 MappingFieldName 對應的 TemplateLine (包含 Excel Column Index)
 		TemplateLine templateLine = getTemplateLine(templateLineMap,
 				StringUtils.trimToEmpty(policy.getMappingFieldName()));
-		// 取得 Excel 地址，如 "B1"
+		// 取得 Excel 地址，如 "B1"，此處要 +1 (要含標題的 row)
 		String excelAddress = ExcelAddressParser.convertNumToAddress(rowIndex + 1, templateLine.getDataColumnNum());
 		log.debug("rowIndex:{}, excelAddress:{}", rowIndex, excelAddress);
 		// 使用 SpEL 解析錯誤訊息
@@ -243,6 +243,9 @@ public class ExcelValidateService {
 
 	/**
 	 * 初始化 SpEL 上下文，準備變數與方法。
+	 * 
+	 * @param contextRoot
+	 * @return StandardEvaluationContext
 	 */
 	public StandardEvaluationContext initContext(ContextRoot contextRoot) {
 		StandardEvaluationContext context = new StandardEvaluationContext();
@@ -257,6 +260,9 @@ public class ExcelValidateService {
 
 	/**
 	 * 將 contextRoot 內的參數 (params) 設置為 SpEL 上下文變數，讓驗證時可以動態讀取參數值。
+	 * 
+	 * @param contextRoot
+	 * @param context
 	 */
 	private void setContextVariable(ContextRoot contextRoot, StandardEvaluationContext context) {
 		// 將 contextRoot 內的參數 (params) 設置為 SpEL 上下文變數，讓驗證時可以動態讀取參數值。
@@ -269,7 +275,10 @@ public class ExcelValidateService {
 	}
 
 	/**
-	 * 將 ValidationUtils 和 VariableUtil 內的所有方法註冊到 SpEL，讓 SpEL 表達式可以直接調用這些方法。
+	 * 將 ValidationUtils 和 VariableUtil 內的所有方法註冊到 StandardEvaluationContext， 讓 SpEL
+	 * 表達式可以直接調用這些方法。
+	 * 
+	 * @param context
 	 */
 	public static void methodRegistration(StandardEvaluationContext context) {
 		try {
