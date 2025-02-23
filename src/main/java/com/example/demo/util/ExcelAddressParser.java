@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  */
 @Component
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class ExcelParseUtil {
+public class ExcelAddressParser {
 
 	/**
 	 * 轉換行號與欄號為 Excel Cell Address (如 A1, B2, C3)

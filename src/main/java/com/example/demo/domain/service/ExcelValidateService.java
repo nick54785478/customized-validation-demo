@@ -18,10 +18,9 @@ import com.example.demo.domain.policy.aggregate.ValidationPolicy;
 import com.example.demo.domain.share.ContextRoot;
 import com.example.demo.domain.share.TemplateLine;
 import com.example.demo.share.bean.ValidateErrorProperty;
-import com.example.demo.util.ExcelParseUtil;
+import com.example.demo.util.ExcelAddressParser;
 import com.example.demo.util.ValidationUtil;
 import com.example.demo.util.VariableUtil;
-import com.google.common.primitives.Ints;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -110,7 +109,7 @@ public class ExcelValidateService {
 								TemplateLine templateLine = getTemplateLine(templateMap, policy.getMappingFieldName());
 								expressionValue.forEach((dataRowIndex, errorMessage) -> {
 									// 取得 ExcelAddress，這邊需 +1，因為是 1-based
-									String excelAddress = ExcelParseUtil.convertNumToAddress(dataRowIndex + 1,
+									String excelAddress = ExcelAddressParser.convertNumToAddress(dataRowIndex + 1,
 											templateLine.getDataColumnNum());
 									ValidateErrorProperty vep = new ValidateErrorProperty();
 									vep.setMessage(excelAddress + " 資料檢核發生錯誤，" + errorMessage);
@@ -125,78 +124,6 @@ public class ExcelValidateService {
 		});
 		return vepList;
 	}
-
-	/**
-	 * 對整個 SHEET 的資料驗證
-	 */
-	public List<ValidateErrorProperty> validateExcelSheetData(ContextRoot contextRoot,
-			List<ValidationPolicy> policyList, List<ValidateErrorProperty> vepList) {
-
-		// 初始化 SpEL 上下文，準備變數與方法。
-		StandardEvaluationContext context = initContext(contextRoot);
-
-		// 根據 SheetName 及 驗證條件:SHEET 過濾出該 Policy 清單
-		List<ValidationPolicy> filteredList = policyList.stream().filter(e -> StringUtils.equals(e.getType(), "SHEET"))
-				.collect(Collectors.toList());
-
-		// 紀錄 Template Line
-		List<Map<String, String>> dataSheet = contextRoot.getSheet();
-		Map<String, TemplateLine> templateMap = generateTemplateMap(policyList);
-
-		// 過濾出針對 SHEET 做驗證的 policy
-		Map<String, ValidationPolicy> validateMap = policyList.stream()
-				.collect(Collectors.toMap(ValidationPolicy::getMappingFieldName, Function.identity()));
-
-		filteredList.stream().forEach(policy -> {
-			// 如果是 VARIABLE => 進行變數設置
-			if (StringUtils.equalsIgnoreCase("VARIABLE", policy.getRule())) {
-				Object obj = parser.parseExpression(policy.getExpression()).getValue(context);
-				contextRoot.getParams().put(policy.getMappingFieldName(), obj);
-				context.setVariable(policy.getMappingFieldName(), obj);
-			} else {
-//				// 不是的話執行驗證
-//				Map<String, String> expressionValue = (Map<String, String>) parser
-//						.parseExpression(policy.getExpression()).getValue(context);
-//				if (expressionValue != null) {
-//					// 取得該 MappingFieldName 對應的 TemplateLine
-//					TemplateLine templateLine = templateMap.get(policy.getMappingFieldName());
-//					
-//				}
-
-			}
-		});
-
-		return new ArrayList<>();
-	}
-
-//	/**
-//	 * 轉換 rowIndex 為 Excel 位置，例如 C4、D2
-//	 *
-//	 * @param errorMap         Map<Integer, String>，存放 rowIndex 及錯誤訊息
-//	 * @param templateMap      Map<mappingFieldName, TemplateLine>，用來獲取欄位的 Excel
-//	 *                         Column Index
-//	 * @param mappingFieldName 欲檢查的欄位名稱
-//	 * @param dataStartRow     Excel 資料起始列（如資料從第 2 行開始，則 dataStartRow = 2）
-//	 * @return Map<String, String> (Excel 位置, errorMessage)
-//	 */
-//	public static Map<String, String> convertRowIndexToExcelPosition(Map<Integer, String> errorMap,
-//			Map<String, TemplateLine> templateMap, String mappingFieldName, int dataStartRow) {
-//		Map<String, String> expressionValue = new LinkedHashMap<>();
-//		// 獲取 Excel 欄位索引
-//		TemplateLine templateLine = templateMap.get(mappingFieldName);
-//		if (templateLine == null) {
-//			throw new IllegalArgumentException("無法找到對應的 TemplateLine: " + mappingFieldName);
-//		}
-//		int columnIndex = templateLine.getDataColumnNum(); // Excel 欄索引
-//
-//		for (Map.Entry<Integer, String> entry : errorMap.entrySet()) {
-//			int rowIndex = entry.getKey();
-//			String excelPosition = ExcelParseUtil.convertNumToAddress(rowIndex + dataStartRow, columnIndex);
-//			expressionValue.put(excelPosition, entry.getValue());
-//		}
-//
-//		return expressionValue;
-//	}
 
 	/**
 	 * 建立 TemplateMap
@@ -306,7 +233,7 @@ public class ExcelValidateService {
 		TemplateLine templateLine = getTemplateLine(templateLineMap,
 				StringUtils.trimToEmpty(policy.getMappingFieldName()));
 		// 取得 Excel 地址，如 "B1"
-		String excelAddress = ExcelParseUtil.convertNumToAddress(rowIndex + 1, templateLine.getDataColumnNum());
+		String excelAddress = ExcelAddressParser.convertNumToAddress(rowIndex + 1, templateLine.getDataColumnNum());
 		log.debug("rowIndex:{}, excelAddress:{}", rowIndex, excelAddress);
 		// 使用 SpEL 解析錯誤訊息
 		String errorMessage = evaluateErrorMsg(context, policy.getErrorMessage(), excelAddress,
