@@ -41,13 +41,11 @@ public class ValidationUtil {
 					// 第一次發現重複，將首次出現的索引也加入錯誤清單
 					if (!recordedDuplicates.contains(value)) {
 						int firstIndex = seenValues.get(value);
-						errorMap.put(firstIndex + 1,
-								String.format("欄位 %s 的值 '%s' 重複", mappingFieldName, value, firstIndex + 1));
+						errorMap.put(firstIndex + 1, String.format("欄位 %s 的值 '%s' 重複", mappingFieldName, value));
 						recordedDuplicates.add(value); // 確保首筆數據只被記錄一次
 					}
 					// 當前索引也加入錯誤清單
-					errorMap.put(rowIndex + 1,
-							String.format("欄位 %s 的值 '%s' 重複", mappingFieldName, value, seenValues.get(value) + 1));
+					errorMap.put(rowIndex + 1, String.format("欄位 %s 的值 '%s' 重複", mappingFieldName, value));
 				} else {
 					// 記錄該值首次出現的索引
 					seenValues.put(value, rowIndex);
