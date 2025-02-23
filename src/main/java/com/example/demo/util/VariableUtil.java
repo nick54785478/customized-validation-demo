@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 public class VariableUtil {
 
 	/**
-	 * 建立 Set
+	 * 根據 Sheet 建立 Set
 	 * 
 	 * @param sheet
 	 * @param mappingFieldName
@@ -61,4 +61,5 @@ public class VariableUtil {
 		return sheet.stream().collect(
 				Collectors.toMap(row -> row.get(key), row -> row.get(value), (r1, r2) -> r2, LinkedHashMap::new));
 	}
+	
 }

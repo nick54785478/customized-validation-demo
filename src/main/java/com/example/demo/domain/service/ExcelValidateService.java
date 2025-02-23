@@ -110,8 +110,10 @@ public class ExcelValidateService {
 									// 取得 ExcelAddress，這邊需 +1 (要含標題的 row)，因為是 1-based
 									String excelAddress = ExcelAddressParser.convertNumToAddress(dataRowIndex + 1,
 											templateLine.getDataColumnNum());
+									log.debug("dataRowIndex:{}, errorMessage:{}", dataRowIndex, errorMessage);
 									ValidateErrorProperty vep = new ValidateErrorProperty();
-									vep.setMessage(excelAddress + " 資料檢核發生錯誤，" + errorMessage);
+									vep.setMessage("SheetName : " + sheetName + ", " + excelAddress + " 資料檢核發生錯誤，"
+											+ errorMessage);
 									vepList.add(vep);
 								});
 							}

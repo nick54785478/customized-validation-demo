@@ -41,13 +41,13 @@ public class ValidationUtil {
 					// 第一次發現重複，將首次出現的索引也加入錯誤清單
 					if (!recordedDuplicates.contains(value)) {
 						int firstIndex = seenValues.get(value);
-						errorMap.put(firstIndex + 1, String.format("欄位 %s 的值 '%s' 重複",
-								mappingFieldName, value, firstIndex + 1));
+						errorMap.put(firstIndex + 1,
+								String.format("欄位 %s 的值 '%s' 重複", mappingFieldName, value, firstIndex + 1));
 						recordedDuplicates.add(value); // 確保首筆數據只被記錄一次
 					}
 					// 當前索引也加入錯誤清單
-					errorMap.put(rowIndex + 1, String.format("欄位 %s 的值 '%s' 重複", mappingFieldName,
-							value, seenValues.get(value) + 1));
+					errorMap.put(rowIndex + 1,
+							String.format("欄位 %s 的值 '%s' 重複", mappingFieldName, value, seenValues.get(value) + 1));
 				} else {
 					// 記錄該值首次出現的索引
 					seenValues.put(value, rowIndex);
@@ -55,6 +55,31 @@ public class ValidationUtil {
 			}
 		}
 		return errorMap;
+	}
+
+	/**
+	 * 判斷該欄位對應值是否存於指定清單中
+	 * 
+	 * @param checkList        檢查用清單(可使用 VARIABLE 定義)
+	 * @param sheet            Excel 資料，List<Map<String, String>> 格式
+	 * @param mappingFieldName 被檢查的欄位
+	 * @return Map<data rowIndex, errorMessage>
+	 */
+	public static Map<Integer, String> contains(List<String> checkList, List<Map<String, String>> sheet,
+			String mappingFieldName) {
+		Map<Integer, String> result = new LinkedHashMap<>(); // 保持順序
+		Set<String> checkSet = new HashSet<>(checkList); // 轉為 Set 加速查詢
+
+		for (int rowIndex = 0; rowIndex < sheet.size(); rowIndex++) {
+			Map<String, String> row = sheet.get(rowIndex);
+			String value = row.get(mappingFieldName);
+
+			if (value != null && !checkSet.contains(value)) {
+				// 只存入 "不存在" 的值
+				result.put(rowIndex + 1, String.format("欄位 %s 的值 '%s' 不存在", mappingFieldName, value));
+			}
+		}
+		return result;
 	}
 
 	/**
