@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -207,7 +209,7 @@ public class ExcelUtil {
 		Workbook workbook = new XSSFWorkbook(inputStream);
 		sheetNameList.stream().forEach(sheetName -> {
 			log.debug("Sheet Name:{}", sheetName);
-			List<Map<String, String>> list = new ArrayList<>();
+			List<Map<String, String>> list = new LinkedList<>();
 			processWorkbook(workbook, sheetName, list);
 			result.put(sheetName, list);
 		});
@@ -215,7 +217,7 @@ public class ExcelUtil {
 	}
 
 	/**
-	 * 處理 多個 sheet
+	 * 處理 sheet 資料
 	 * 
 	 * @param Workbook  workbook
 	 * @param sheetName 表名
@@ -230,7 +232,8 @@ public class ExcelUtil {
 
 		// 迭代列 (從第 2 列開始)
 		for (int rowIndex = 1; rowIndex <= sheet.getLastRowNum(); rowIndex++) {
-			Map<String, String> map = new HashMap<>();
+			// 此處期望 <Header, CellValue> 按照順序排序
+			Map<String, String> map = new LinkedHashMap<>();
 			// 資料列
 			Row row = sheet.getRow(rowIndex);
 			if (row == null) {

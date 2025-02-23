@@ -2,8 +2,10 @@ package com.example.demo.domain.service;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -51,15 +53,19 @@ public class ExcelValidateService {
 
 		// 遍歷 SheetMap
 		sheetMap.forEach((sheetName, dataSheet) -> {
+			// 取得所有 MappingFieldName List
+			Set<String> mappingFieldNames = dataSheet.stream().flatMap(map -> map.keySet().stream()) // 提取所有 Key
+					.collect(Collectors.toCollection(LinkedHashSet::new)); // 使用 Set 避免重複
+
+			// 生成 TemplateMap Map<mappingFieldName, TemplateLine>
+			Map<String, TemplateLine> templateMap = this.generateTemplateMap(sheetName, mappingFieldNames);
+
 			// 設置當前的 Sheet
 			contextRoot.setSheet(dataSheet);
 			// 初始化 SpEL 上下文，準備變數與方法。
 			StandardEvaluationContext context = initContext(contextRoot);
 			if (policyMap.containsKey(sheetName)) {
 				List<ValidationPolicy> policies = policyMap.get(sheetName);
-
-				// 生成 TemplateMap Map<mappingFieldName, TemplateLine>
-				Map<String, TemplateLine> templateMap = this.generateTemplateMap(policies);
 
 				// 根據 Policy 去驗證資料
 				policies.stream().forEach(policy -> {
@@ -129,20 +135,15 @@ public class ExcelValidateService {
 	/**
 	 * 建立 TemplateMap
 	 * 
-	 * @param policyList
+	 * @param sheetName         SheetName
+	 * @param mappingFieldNames MappingFieldName 清單
 	 * @return Map<mappingFieldName, TemplateLine>
 	 */
-	private Map<String, TemplateLine> generateTemplateMap(List<ValidationPolicy> policyList) {
+	private Map<String, TemplateLine> generateTemplateMap(String sheetName, Set<String> mappingFieldNames) {
 		Map<String, TemplateLine> templateMap = new HashMap<>();
 		int columnIndex = 1;
-		// 動態建立 MappingFieldName -> TemplateLine 的對應關係
-		for (ValidationPolicy policy : policyList) {
-			String mappingFieldName = StringUtils.trimToEmpty(policy.getMappingFieldName());
-			// 避免後蓋前
-			if (!templateMap.containsKey(mappingFieldName)) {
-				templateMap.put(mappingFieldName,
-						new TemplateLine(policy.getTemplateSheetName(), mappingFieldName, columnIndex));
-			}
+		for (String mappingFieldName : mappingFieldNames) {
+			templateMap.put(mappingFieldName, new TemplateLine(sheetName, mappingFieldName, columnIndex));
 			columnIndex++;
 		}
 		return templateMap;
