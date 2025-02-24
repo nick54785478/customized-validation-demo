@@ -1,4 +1,4 @@
-package com.example.demo.domain.service;
+package com.example.demo.service;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -25,7 +25,7 @@ import com.example.demo.util.VariableUtil;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 用來進行範本客製驗證的 Domain Service
+ * 用來進行範本客製驗證的 Application Service
  */
 @Slf4j
 @Service
