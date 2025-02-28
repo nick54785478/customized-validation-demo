@@ -1,0 +1,56 @@
+{
+	"info": {
+		"_postman_id": "76f7dd68-7df6-475c-bcbb-7b1681191711",
+		"name": "customized_validation-demo",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1939449",
+		"_collection_link": "https://winter-spaceship-360737.postman.co/workspace/New-Team-Workspace~3acb9d1b-170f-451b-a1ca-9b98cf5cac55/collection/1939449-76f7dd68-7df6-475c-bcbb-7b1681191711?action=share&source=collection_link&creator=1939449"
+	},
+	"item": [
+		{
+			"name": "upload",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "multipart/form-data",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "resource",
+							"value": "{\n    \"name\": \"USER_PROFILE\",\n    \"type\": \"\",\n    \"fileType\": \"xlsx\",\n    \"filePath\": \"/TEMPLATE/USER_PROFILE\",\n    \"fileName\": \"USER_PROFILE.xlsx\"\n}",
+							"contentType": "application/json",
+							"type": "text"
+						},
+						{
+							"key": "file",
+							"contentType": "",
+							"type": "file",
+							"src": "/D:/桌面/SpringBootWorkSpace/customized-validation-demo/src/main/resources/templates/USER_PROFILE.xlsx"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/v1/upload",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"upload"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

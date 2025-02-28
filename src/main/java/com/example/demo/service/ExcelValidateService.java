@@ -71,65 +71,94 @@ public class ExcelValidateService {
 				policies.stream().forEach(policy -> {
 					// 處理 ROW 資料
 					if (StringUtils.equalsIgnoreCase(policy.getType(), "ROW")) {
-						// 遍歷當前的 Sheet 資料
-						for (int i = 0; i < dataSheet.size(); i++) {
-							contextRoot.setCurrentRow(dataSheet.get(i)); // 設置當前 row
-							String mappingFieldName = StringUtils.trimToEmpty(policy.getMappingFieldName());
-							if (!StringUtils.equalsIgnoreCase(policy.getRule(), "ENFORCE_ROW_VALIDATION")
-									&& isRowFieldBlank(contextRoot, mappingFieldName)) {
-								continue;
-							}
-							// 設置當前處理的欄位值。
-							this.setSingleMappingForRowCellValue(contextRoot, mappingFieldName);
-							// 取得預處理表達式，可擴展替換特殊標記
-							String expression = preProcessExpression(policy.getExpression());
-							log.debug("[validateExcelData] ROW after preprocessor: {}, {}", mappingFieldName,
-									expression);
-
-							// 執行 Expression
-							Boolean expressionValue = evaluateExpression(context, expression, contextRoot);
-							if (!Boolean.TRUE.equals(expressionValue)) {
-								// 格式化驗證錯誤資訊，由於遍歷是從 0 開始，所以此處要輸入 i+1
-								ValidateErrorProperty vep = formatRowValidateError(context, templateMap, policy, i + 1);
-								vepList.add(vep);
-							}
-						}
+						this.processRowPolicy(dataSheet, policy, contextRoot, context, templateMap, vepList);
 						// 處理 SHEET 資料
 					} else if (StringUtils.equalsIgnoreCase(policy.getType(), "SHEET")) {
-
-						if (StringUtils.equalsIgnoreCase("VARIABLE", policy.getRule())) {
-							// 如果是 VARIABLE => 進行變數設置
-							Object obj = parser.parseExpression(policy.getExpression()).getValue(context);
-							contextRoot.getParams().put(policy.getMappingFieldName(), obj);
-							context.setVariable(policy.getMappingFieldName(), obj);
-						} else {
-							// 處理 SHEET 的 Policy
-							// 取得預處理表達式，可擴展替換特殊標記
-							String expression = preProcessExpression(policy.getExpression());
-							// 執行 Expression，並回傳 Map< rowIndex, errorMessage >
-							Map<Integer, String> expressionValue = (Map<Integer, String>) parser
-									.parseExpression(expression).getValue(context);
-
-							if (expressionValue != null) {
-								TemplateLine templateLine = getTemplateLine(templateMap, policy.getMappingFieldName());
-								expressionValue.forEach((dataRowIndex, errorMessage) -> {
-									// 取得 ExcelAddress，這邊需 +1 (要含標題的 row)，因為是 1-based
-									String excelAddress = ExcelAddressParser.convertNumToAddress(dataRowIndex + 1,
-											templateLine.getDataColumnNum());
-									log.debug("dataRowIndex:{}, errorMessage:{}", dataRowIndex, errorMessage);
-									ValidateErrorProperty vep = new ValidateErrorProperty();
-									vep.setMessage("SheetName : " + sheetName + ", " + excelAddress + " 資料檢核發生錯誤，"
-											+ errorMessage);
-									vepList.add(vep);
-								});
-							}
-							log.debug("expressionValue : {}", expressionValue);
-						}
+						this.processSheetPolicy(sheetName, policy, context, contextRoot, templateMap, vepList);
 					}
 				});
 			}
 		});
 		return vepList;
+	}
+
+	/**
+	 * 處理 ROW 種類的客製驗證
+	 * 
+	 * @param dataSheet   Sheet 資料
+	 * @param policy      Policy
+	 * @param contextRoot ContextRoot
+	 * @param context     Context
+	 * @param templateMap Map<mappingFieldName, TemplateLine>
+	 * @param vepList     錯誤清單
+	 */
+	public void processRowPolicy(List<Map<String, String>> dataSheet, ValidationPolicy policy, ContextRoot contextRoot,
+			StandardEvaluationContext context, Map<String, TemplateLine> templateMap,
+			List<ValidateErrorProperty> vepList) {
+		// 遍歷當前的 Sheet 資料
+		for (int i = 0; i < dataSheet.size(); i++) {
+			contextRoot.setCurrentRow(dataSheet.get(i)); // 設置當前 row
+			String mappingFieldName = StringUtils.trimToEmpty(policy.getMappingFieldName());
+			if (!StringUtils.equalsIgnoreCase(policy.getRule(), "ENFORCE_ROW_VALIDATION")
+					&& isRowFieldBlank(contextRoot, mappingFieldName)) {
+				continue;
+			}
+			// 設置當前處理的欄位值。
+			this.setSingleMappingForRowCellValue(contextRoot, mappingFieldName);
+			// 取得預處理表達式，可擴展替換特殊標記
+			String expression = preProcessExpression(policy.getExpression());
+			log.debug("[validateExcelData] ROW after preprocessor: {}, {}", mappingFieldName, expression);
+
+			// 執行 Expression
+			Boolean expressionValue = evaluateExpression(context, expression, contextRoot);
+			if (!Boolean.TRUE.equals(expressionValue)) {
+				// 格式化驗證錯誤資訊，由於遍歷是從 0 開始，所以此處要輸入 i+1
+				ValidateErrorProperty vep = formatRowValidateError(context, templateMap, policy, i + 1);
+				vepList.add(vep);
+			}
+		}
+	}
+
+	/**
+	 * 處理 SHEET 種類的客製驗證
+	 * 
+	 * @param sheetName   Sheet Name
+	 * @param policy      Policy
+	 * @param context     Context
+	 * @param contextRoot ContextRoot
+	 * @param templateMap Map<mappingFieldName, TemplateLine>
+	 * @param vepList     錯誤清單
+	 */
+	public void processSheetPolicy(String sheetName, ValidationPolicy policy, StandardEvaluationContext context,
+			ContextRoot contextRoot, Map<String, TemplateLine> templateMap, List<ValidateErrorProperty> vepList) {
+		if (StringUtils.equalsIgnoreCase("VARIABLE", policy.getRule())) {
+			// 如果是 VARIABLE => 進行變數設置
+			Object obj = parser.parseExpression(policy.getExpression()).getValue(context);
+			contextRoot.getParams().put(policy.getMappingFieldName(), obj);
+			context.setVariable(policy.getMappingFieldName(), obj);
+		} else {
+			// 處理 SHEET 的 Policy
+			// 取得預處理表達式，可擴展替換特殊標記
+			String expression = preProcessExpression(policy.getExpression());
+			// 執行 Expression，並回傳 Map< rowIndex, errorMessage >
+			Map<Integer, String> expressionValue = (Map<Integer, String>) parser.parseExpression(expression)
+					.getValue(context);
+
+			if (expressionValue != null) {
+				TemplateLine templateLine = getTemplateLine(templateMap, policy.getMappingFieldName());
+				expressionValue.forEach((dataRowIndex, errorMessage) -> {
+					// 取得 ExcelAddress，這邊需 +1 (要含標題的 row)，因為是 1-based
+					String excelAddress = ExcelAddressParser.convertNumToAddress(dataRowIndex + 1,
+							templateLine.getDataColumnNum());
+					log.debug("dataRowIndex:{}, errorMessage:{}", dataRowIndex, errorMessage);
+					ValidateErrorProperty vep = new ValidateErrorProperty();
+					vep.setMessage("SheetName : " + sheetName + ", " + excelAddress + " 資料檢核發生錯誤，" + errorMessage);
+					vepList.add(vep);
+				});
+			}
+			log.debug("expressionValue : {}", expressionValue);
+		}
+
 	}
 
 	/**
@@ -285,12 +314,14 @@ public class ExcelValidateService {
 	 */
 	public static void methodRegistration(StandardEvaluationContext context) {
 		try {
-			log.debug("start regist context methods");
+			log.debug("Start registering context methods");
 			for (Method m : ValidationUtil.class.getDeclaredMethods()) {
+				log.debug("Context methods:{} registered", m.getName());
 				context.registerFunction(m.getName(), m);
 			}
 
 			for (Method m : VariableUtil.class.getDeclaredMethods()) {
+				log.debug("Context methods:{} registered", m.getName());
 				context.registerFunction(m.getName(), m);
 			}
 

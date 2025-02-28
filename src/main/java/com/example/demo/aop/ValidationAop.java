@@ -10,7 +10,6 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -39,13 +38,20 @@ public class ValidationAop {
 	private ValidationPolicyRepository validationPolicyRepository;
 
 	/**
-	 * 定義切入點，針對 MoneyAccountRepository 的 save 方法進行切入。
+	 * 定義切入點，針對 UploadCommandService 的 upload 方法進行切入。
 	 */
 	@Pointcut("execution(* com.example.demo.service.UploadCommandService.upload(..))")
 	public void pointCut() {
 
 	}
 
+	/**
+	 * 執行客製驗證
+	 * 
+	 * @param joinPoint 切入點
+	 * @return 方法執行結果
+	 * @throws Throwable 例外
+	 */
 	@Around("pointCut()")
 	public Object validateExcelData(ProceedingJoinPoint joinPoint) throws Throwable {
 		Object[] args = joinPoint.getArgs();
