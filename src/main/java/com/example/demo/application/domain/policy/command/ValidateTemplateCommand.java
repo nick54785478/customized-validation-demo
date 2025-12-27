@@ -1,4 +1,4 @@
-package com.example.demo.domain.policy.command;
+package com.example.demo.application.domain.policy.command;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,15 +1,18 @@
-package com.example.demo.domain.share.command;
+package com.example.demo.share.command;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * 模擬範本上傳的 Command
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class UploadTemplateCommand {
 
-	private String name; 
+	private String name;
 
 	private String type; // 範本種類
 

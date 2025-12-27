@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,15 +11,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import com.example.demo.domain.policy.aggregate.ValidationPolicy;
-import com.example.demo.domain.share.ContextRoot;
-import com.example.demo.share.bean.ValidateErrorProperty;
+import com.example.demo.application.domain.policy.aggregate.ValidationPolicy;
+import com.example.demo.infra.cv.shared.ValidateErrorProperty;
+import com.example.demo.infra.cv.shared.context.ContextRoot;
+import com.example.demo.infra.cv.validator.CustomValidator;
 
 @SpringBootTest
 class ExcelValidateServiceTest {
 
 	@Autowired
-	private ExcelValidateService excelValidateService;
+	private CustomValidator customValidator;
 
 	@BeforeEach
 	void setUp() throws Exception {
@@ -46,8 +46,7 @@ class ExcelValidateServiceTest {
 						"'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"));
 		contextRoot.setSheetMap(sheetMap);
 
-		List<ValidateErrorProperty> validateExcelData = excelValidateService.validateExcelData(contextRoot, policies,
-				new ArrayList<>());
+		List<ValidateErrorProperty> validateExcelData = customValidator.validateExcelData(contextRoot, policies);
 
 		assertTrue(!validateExcelData.isEmpty());
 

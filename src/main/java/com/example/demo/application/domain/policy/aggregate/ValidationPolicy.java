@@ -1,4 +1,4 @@
-package com.example.demo.domain.policy.aggregate;
+package com.example.demo.application.domain.policy.aggregate;
 
 import com.example.demo.share.enums.YesNo;
 
@@ -29,7 +29,7 @@ public class ValidationPolicy {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-
+	
 	private String type; // 驗證類型，ROW、SHEET
 
 	@Column(name = "template_name")

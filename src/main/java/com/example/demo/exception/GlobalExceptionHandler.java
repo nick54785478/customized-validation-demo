@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.demo.exception.response.BaseExceptionResponse;
 import com.example.demo.exception.response.BaseExceptionsResponse;
-import com.example.demo.share.bean.ValidateErrorProperty;
+import com.example.demo.infra.cv.shared.ValidateErrorProperty;
 import com.example.demo.util.BaseDataTransformer;
 
 import lombok.extern.slf4j.Slf4j;

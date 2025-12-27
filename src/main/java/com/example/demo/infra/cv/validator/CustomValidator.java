@@ -1,6 +1,7 @@
-package com.example.demo.service;
+package com.example.demo.infra.cv.validator;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,24 +13,24 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-import com.example.demo.domain.policy.aggregate.ValidationPolicy;
-import com.example.demo.domain.share.ContextRoot;
-import com.example.demo.domain.share.TemplateLine;
-import com.example.demo.share.bean.ValidateErrorProperty;
-import com.example.demo.util.ExcelAddressParser;
+import com.example.demo.application.domain.policy.aggregate.ValidationPolicy;
+import com.example.demo.infra.cv.parser.ExcelAddressParser;
+import com.example.demo.infra.cv.shared.TemplateLine;
+import com.example.demo.infra.cv.shared.ValidateErrorProperty;
+import com.example.demo.infra.cv.shared.context.ContextRoot;
 import com.example.demo.util.ValidationUtil;
 import com.example.demo.util.VariableUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 用來進行範本客製驗證的 Application Service
+ * 客製驗證器
  */
 @Slf4j
-@Service
-public class ExcelValidateService {
+@Component
+public class CustomValidator {
 
 	private static final ExpressionParser parser = new SpelExpressionParser();
 
@@ -38,11 +39,11 @@ public class ExcelValidateService {
 	 * 
 	 * @param contextRoot Context 資料
 	 * @param policy      驗證原則
-	 * @param vepList     錯誤訊息清單
 	 * @return 錯誤訊息清單
 	 */
-	public List<ValidateErrorProperty> validateExcelData(ContextRoot contextRoot, List<ValidationPolicy> policyList,
-			List<ValidateErrorProperty> vepList) {
+	public List<ValidateErrorProperty> validateExcelData(ContextRoot contextRoot, List<ValidationPolicy> policyList) {
+
+		List<ValidateErrorProperty> vepList = new ArrayList<>();
 
 		// 紀錄 Template Line
 		Map<String, List<Map<String, String>>> sheetMap = contextRoot.getSheetMap();
@@ -99,6 +100,8 @@ public class ExcelValidateService {
 		for (int i = 0; i < dataSheet.size(); i++) {
 			contextRoot.setCurrentRow(dataSheet.get(i)); // 設置當前 row
 			String mappingFieldName = StringUtils.trimToEmpty(policy.getMappingFieldName());
+
+			// 有 MappingFieldName
 			if (!StringUtils.equalsIgnoreCase(policy.getRule(), "ENFORCE_ROW_VALIDATION")
 					&& isRowFieldBlank(contextRoot, mappingFieldName)) {
 				continue;
@@ -141,6 +144,16 @@ public class ExcelValidateService {
 			// 取得預處理表達式，可擴展替換特殊標記
 			String expression = preProcessExpression(policy.getExpression());
 			// 執行 Expression，並回傳 Map< rowIndex, errorMessage >
+			/*
+			 * 說明： SpEL 的 Expression#getValue(EvaluationContext) 回傳型別為 Object，
+			 * 編譯期無法得知實際泛型型別，因此轉型為 Map<Integer, String> 時，會產生 unchecked cast 警告。
+			 *
+			 * 此處 expression 的設計即約定回傳型別必為 Map<Integer, String>， 且 expression 與
+			 * EvaluationContext 皆由系統內部控制， 非來自外部不可信輸入，風險可控。
+			 *
+			 * 因此在此行局部使用 @SuppressWarnings("unchecked") 抑制警告， 避免污染方法或類別層級，同時保持程式碼可讀性與型別語意清楚。
+			 */
+			@SuppressWarnings("unchecked")
 			Map<Integer, String> expressionValue = (Map<Integer, String>) parser.parseExpression(expression)
 					.getValue(context);
 
@@ -334,5 +347,4 @@ public class ExcelValidateService {
 			log.error("function reg fail");
 		}
 	}
-
 }

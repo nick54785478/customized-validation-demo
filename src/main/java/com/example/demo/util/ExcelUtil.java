@@ -239,13 +239,13 @@ public class ExcelUtil {
 				break;
 			}
 
-			// 遍歷標題行的每一個單元格
+			// 遍歷標題列的每一個單元格
 			Iterator<Cell> titleCellIterator = titleRow.cellIterator();
 			int cellIndex = 0;
 			while (titleCellIterator.hasNext()) {
-				String key = StringUtils.trim(parseCellValue(titleCellIterator.next()));
+				String key = StringUtils.trim(parseCellValue(titleCellIterator.next())); // Header
 
-				String value = parseCellValue(row.getCell(cellIndex));
+				String value = parseCellValue(row.getCell(cellIndex)); // Value
 				if (StringUtils.isNotBlank(key)) {
 					map.put(key, value);
 				}

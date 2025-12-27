@@ -2,7 +2,7 @@ package com.example.demo.exception;
 
 import java.util.List;
 
-import com.example.demo.share.bean.ValidateErrorProperty;
+import com.example.demo.infra.cv.shared.ValidateErrorProperty;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

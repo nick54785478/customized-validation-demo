@@ -1,4 +1,4 @@
-package com.example.demo.util;
+package com.example.demo.infra.cv.parser;
 
 import org.springframework.stereotype.Component;
 

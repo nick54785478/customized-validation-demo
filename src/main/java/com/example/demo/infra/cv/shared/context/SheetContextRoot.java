@@ -1,4 +1,4 @@
-package com.example.demo.domain.share;
+package com.example.demo.infra.cv.shared.context;
 
 import java.util.List;
 import java.util.Map;
@@ -17,6 +17,5 @@ public class SheetContextRoot {
 	private List<Map<String, String>> sheet; // Sheet 資料( Excel 轉換的 List<Map>)
 	
 	private Map<String, Object> params; // ParamMap 參數設置
-
 
 }

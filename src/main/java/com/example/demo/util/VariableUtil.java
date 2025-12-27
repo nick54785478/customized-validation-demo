@@ -24,7 +24,6 @@ public class VariableUtil {
 	/**
 	 * 根據 Sheet 建立 Set
 	 * 
-	 * @param sheet
 	 * @param mappingFieldName
 	 */
 	public static Set<String> toSet(List<Map<String, String>> sheet, String mappingFieldName) {

@@ -11,10 +11,10 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.example.demo.domain.share.command.UploadTemplateCommand;
+import com.example.demo.application.service.UploadCommandService;
 import com.example.demo.iface.dto.TemplateUploadedResource;
 import com.example.demo.iface.dto.UploadTemplateResource;
-import com.example.demo.service.UploadCommandService;
+import com.example.demo.share.command.UploadTemplateCommand;
 import com.example.demo.util.BaseDataTransformer;
 
 import lombok.AllArgsConstructor;
