@@ -196,6 +196,7 @@
 | `src/main/java/com/example/demo/infra/adapter/ExcelValidatorAdapter.java` | **Modify** | Mapping | 整合工作表與標題雙層對映倉儲與正規化防腐器 |
 | `src/test/java/com/example/demo/infra/cv/normalizer/TemplateSheetNormalizerTest.java` | **Create** | Testing | 建立工作表正規化與防呆單元測試 (含 Gherkin Javadoc) |
 | `src/test/java/com/example/demo/infra/cv/normalizer/TemplateHeaderNormalizerTest.java` | **Create** | Testing | 建立標題正規化與防呆單元測試 (含 Gherkin Javadoc) |
+| `plan/TEMPLATE_FIELD_MAPPING_DESIGN.md` | **Create/Update** | Mapping | 雙層範本對映防腐機制規格說明書 (Two-Tier Template Mapping Specification) |
 | `src/test/java/com/example/demo/service/ExcelValidateServiceTest.java` | **Modify** | Phase 1, 4 | 更新 import、採用 `ValidationError` 並補齊 Gherkin Javadoc |
 
 ---
