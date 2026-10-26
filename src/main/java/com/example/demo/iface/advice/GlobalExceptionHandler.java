@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
 		List<String> errMessageList = e.getVepList().stream()
 				.map(ValidationError::message)
 				.toList();
-		return ResponseEntity.status(HttpStatus.OK)
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
 				.body(new BaseExceptionsResponse("VALIDATE_FAILED", errMessageList));
 	}
 
