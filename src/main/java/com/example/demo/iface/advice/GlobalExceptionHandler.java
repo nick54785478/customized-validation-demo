@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
 	 * 處理 Excel 範本檢核失敗結構化例外
 	 *
 	 * @param e Excel 檢核例外
-	 * @return HTTP 200 封裝之多筆錯誤回應清單
+	 * @return HTTP 422 封裝之多筆錯誤回應清單
 	 */
 	@ResponseBody
 	@ExceptionHandler(ExcelValidationException.class)

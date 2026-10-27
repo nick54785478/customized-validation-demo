@@ -62,4 +62,30 @@ class ExcelValidateServiceTest {
 
 	}
 
+	/**
+	 * Feature: Excel 客製資料驗證引擎
+	 * Scenario: 當 ContextRoot 配置 sheetDisplayNameMap 時，錯誤訊息中的 #sheetName 應正確渲染為友善中文名稱
+	 * Given: 工作表代碼為 USER，對應友善顯示名稱為「使用者名單」
+	 * When: 調用 customValidator.validateExcelData 執行檢核
+	 * Then: 產出的錯誤訊息中應包含「SheetName = 使用者名單」而非「SheetName = USER」
+	 */
+	@Test
+	void testValidateExcelData_withSheetDisplayName_shouldRenderFriendlyName() {
+		List<Map<String, String>> sheet = List.of(Map.of("name", "王五", "age", "28", "sex", ""));
+		ContextRoot contextRoot = new ContextRoot();
+		contextRoot.setSheet(sheet);
+		contextRoot.setParams(new LinkedHashMap<>());
+		contextRoot.setSheetDisplayNameMap(Map.of("USER", "使用者名單"));
+		contextRoot.setSheetMap(Map.of("USER", sheet));
+
+		List<ValidationPolicy> policies = List.of(
+				new ValidationPolicy("ROW", "USER", "ENFORCE_ROW_VALIDATION", "sex", "#checkedValue!=''",
+						"'SheetName = ' + #sheetName + ', ' + #excelAddress + ' 資料檢核有誤，不能為空'"));
+
+		List<ValidationError> errors = customValidator.validateExcelData(contextRoot, policies);
+
+		assertTrue(!errors.isEmpty());
+		assertTrue(errors.get(0).message().contains("SheetName = 使用者名單"));
+	}
+
 }

@@ -158,10 +158,18 @@ public class ExcelValidatorAdapter implements ExcelValidatorPort {
             Map<String, List<Map<String, String>>> normalizedExcelData = templateHeaderNormalizer
                     .normalize(templateName, sheetNormalizedData, fieldMappings);
 
-            // 步驟 5: 封裝檢核上下文根物件 (ContextRoot)，提供 SpEL 執行環境所需參數
+            // 步驟 5: 封裝檢核上下文根物件 (ContextRoot)，提供 SpEL 執行環境所需參數與工作表友善名稱對映字典
+            Map<String, String> sheetDisplayNameMap = new LinkedHashMap<>();
+            if (sheetMappings != null) {
+                for (TemplateSheetMapping mapping : sheetMappings) {
+                    sheetDisplayNameMap.put(mapping.getSheetCode(), mapping.getDisplayName());
+                }
+            }
+
             ContextRoot contextRoot = ContextRoot.builder()
                     .params(new LinkedHashMap<>())
                     .sheetMap(normalizedExcelData)
+                    .sheetDisplayNameMap(sheetDisplayNameMap)
                     .build();
 
             // 步驟 6: 調用客製驗證引擎執行規則比對與運算

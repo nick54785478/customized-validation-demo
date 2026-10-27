@@ -25,7 +25,11 @@ public class ContextRoot {
 
 	private List<Map<String, String>> sheet; // 所有 Sheet 資料( Excel 轉換的 List<Map>)
 
-	private Map<String, Object> params; // ParamMap 參數設置
+	@Builder.Default
+	private Map<String, Object> params = new java.util.LinkedHashMap<>(); // ParamMap 參數設置
+
+	@Builder.Default
+	private Map<String, String> sheetDisplayNameMap = new java.util.LinkedHashMap<>(); // 工作表代碼與外部顯示名稱之對照字典 Map<sheetCode, displayName>
 
 	/**
 	 * 透過 FieldName 取得該 FieldValue
@@ -35,6 +39,19 @@ public class ContextRoot {
 	 */
 	public String getFieldValue(String fieldName) {
 		return currentRow.get(fieldName);
+	}
+
+	/**
+	 * 依據工作表內部代碼取得對應之外部顯示名稱（若無對照則回退為內部代碼）
+	 *
+	 * @param sheetCode 內部標準工作表代碼 (例如: "USER")
+	 * @return 外部顯示名稱 (例如: "使用者名單")，若不存在則回傳 sheetCode 本身
+	 */
+	public String getSheetDisplayName(String sheetCode) {
+		if (sheetDisplayNameMap != null && sheetDisplayNameMap.containsKey(sheetCode)) {
+			return sheetDisplayNameMap.get(sheetCode);
+		}
+		return sheetCode;
 	}
 
 }

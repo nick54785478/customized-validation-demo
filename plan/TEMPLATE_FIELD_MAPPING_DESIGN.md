@@ -415,11 +415,22 @@ public void validateExcelData(String templateName, InputStream inputStream) {
     Map<String, List<Map<String, String>>> normalizedExcelData = templateHeaderNormalizer
             .normalize(templateName, sheetNormalizedData, fieldMappings);
 
-    // 步驟 5: 建置客製驗證引擎所需之根上下文環境 (ContextRoot)
-    ContextRoot contextRoot = new ContextRoot(normalizedExcelData);
+    // 步驟 5: 封裝檢核上下文根物件 (ContextRoot)，提供 SpEL 執行環境所需參數與工作表友善名稱對映字典
+    Map<String, String> sheetDisplayNameMap = new LinkedHashMap<>();
+    if (sheetMappings != null) {
+        for (TemplateSheetMapping mapping : sheetMappings) {
+            sheetDisplayNameMap.put(mapping.getSheetCode(), mapping.getDisplayName());
+        }
+    }
 
-    // 步驟 6: 呼叫驗證核心評估各項規則 (SpEL 計算)
-    List<ValidationError> validationErrors = customValidator.validate(contextRoot, policyList);
+    ContextRoot contextRoot = ContextRoot.builder()
+            .params(new LinkedHashMap<>())
+            .sheetMap(normalizedExcelData)
+            .sheetDisplayNameMap(sheetDisplayNameMap)
+            .build();
+
+    // 步驟 6: 呼叫驗證核心評估各項規則 (SpEL 計算時原生代入友善工作表顯示名稱)
+    List<ValidationError> validationErrors = customValidator.validateExcelData(contextRoot, policyList);
 
     // 步驟 7: 若存在錯誤項目，立即拋出結構化檢核例外阻斷後續流程
     if (!validationErrors.isEmpty()) {
@@ -427,6 +438,10 @@ public void validateExcelData(String templateName, InputStream inputStream) {
     }
 }
 ```
+
+> **📌 錯誤訊息工作表名稱友善轉譯決策 (Context-level SheetName Binding)**：  
+> 當驗證核心 [CustomValidator](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/cv/validator/CustomValidator.java) 在評估 SpEL 錯誤訊息範本（例如 `'SheetName : ' + #sheetName + ...'`）時，直接從 [ContextRoot](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/cv/shared/context/ContextRoot.java) 中取用 `sheetDisplayNameMap` 將 `#sheetName` 綁定為外部友善顯示名稱（如「使用者名單」），保證 SpEL 原生渲染出友善錯誤訊息，避免於出口端進行脆弱的字串模糊替換。
+
 
 ---
 

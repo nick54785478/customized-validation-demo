@@ -86,6 +86,7 @@ public class CustomValidator {
 
             // 初始化 SpEL 評估上下文，註冊全域參數與內建靜態驗證函式
             StandardEvaluationContext context = initContext(contextRoot);
+            context.setVariable("sheetName", contextRoot.getSheetDisplayName(sheetName));
 
             // 若該工作表存在對應的驗證策略，則依序執行策略檢核
             if (policyMap.containsKey(sheetName)) {
@@ -146,8 +147,9 @@ public class CustomValidator {
 
             // 若評估結果不為 true (為 false 或 null)，代表檢核未通過
             if (!Boolean.TRUE.equals(expressionValue)) {
-                // 格式化驗證錯誤資訊，因資料列走訪從 0 起算，Excel 行數需帶入 i + 1
-                ValidationError vep = formatRowValidateError(context, templateMap, policy, i + 1);
+                // 格式化驗證錯誤資訊，因資料列走訪從 0 起算，Excel 行數需帶入 i + 1，並代入工作表顯示名稱
+                String displaySheetName = contextRoot.getSheetDisplayName(policy.getTemplateSheetName());
+                ValidationError vep = formatRowValidateError(context, templateMap, policy, i + 1, displaySheetName);
                 vepList.add(vep);
             }
         }
@@ -191,12 +193,13 @@ public class CustomValidator {
 
             if (expressionValue != null) {
                 TemplateLine templateLine = getTemplateLine(templateMap, policy.getMappingFieldName());
+                String displaySheetName = contextRoot.getSheetDisplayName(sheetName);
                 expressionValue.forEach((dataRowIndex, errorMessage) -> {
                     // 計算實體 Excel 座標（需加上標題列與 1-based 偏移）
                     String excelAddress = ExcelAddressParser.convertNumToAddress(dataRowIndex + 1,
                             templateLine.getDataColumnNum());
                     log.debug("dataRowIndex:{}, errorMessage:{}", dataRowIndex, errorMessage);
-                    vepList.add(new ValidationError("SheetName : " + sheetName + ", " + excelAddress + " 資料檢核發生錯誤，" + errorMessage));
+                    vepList.add(new ValidationError("SheetName : " + displaySheetName + ", " + excelAddress + " 資料檢核發生錯誤，" + errorMessage));
                 });
             }
             log.debug("expressionValue : {}", expressionValue);
@@ -295,14 +298,18 @@ public class CustomValidator {
     /**
      * 格式化並封裝資料列驗證失敗之 {@link ValidationError} 值物件
      *
-     * @param context         SpEL 評估上下文
-     * @param templateLineMap 欄位座標對照表
-     * @param policy          違規之檢核策略與原則
-     * @param rowIndex        發生違規之資料列索引 (1-based，包含標題偏移)
+     * @param context          SpEL 評估上下文
+     * @param templateLineMap  欄位座標對照表
+     * @param policy           違規之檢核策略與原則
+     * @param rowIndex         發生違規之資料列索引 (1-based，包含標題偏移)
+     * @param displaySheetName 工作表之友善顯示名稱
      * @return 包含規則代碼、列號與具體錯誤訊息之 {@link ValidationError}
      */
     private static ValidationError formatRowValidateError(StandardEvaluationContext context,
-                                                          Map<String, TemplateLine> templateLineMap, ValidationPolicy policy, int rowIndex) {
+                                                          Map<String, TemplateLine> templateLineMap,
+                                                          ValidationPolicy policy,
+                                                          int rowIndex,
+                                                          String displaySheetName) {
         // 取得 MappingFieldName 對應的 TemplateLine (包含 Excel 欄位索引)
         TemplateLine templateLine = getTemplateLine(templateLineMap,
                 StringUtils.trimToEmpty(policy.getMappingFieldName()));
@@ -311,11 +318,21 @@ public class CustomValidator {
         String excelAddress = ExcelAddressParser.convertNumToAddress(rowIndex + 1, templateLine.getDataColumnNum());
         log.debug("rowIndex:{}, excelAddress:{}", rowIndex, excelAddress);
 
-        // 使用 SpEL 解析渲染錯誤訊息模板
+        // 使用 SpEL 解析渲染錯誤訊息模板，傳入友善的工作表顯示名稱
         String errorMessage = evaluateErrorMsg(context, policy.getErrorMessage(), excelAddress,
-                policy.getTemplateSheetName());
+                displaySheetName);
 
         return new ValidationError(policy.getRule(), rowIndex, errorMessage);
+    }
+
+    /**
+     * 格式化並封裝資料列驗證失敗之 {@link ValidationError} 值物件（向下相容舊簽章）
+     */
+    private static ValidationError formatRowValidateError(StandardEvaluationContext context,
+                                                          Map<String, TemplateLine> templateLineMap,
+                                                          ValidationPolicy policy,
+                                                          int rowIndex) {
+        return formatRowValidateError(context, templateLineMap, policy, rowIndex, policy.getTemplateSheetName());
     }
 
     /**
