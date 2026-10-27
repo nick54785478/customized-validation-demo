@@ -531,6 +531,48 @@ public void validateExcelData(String templateName, InputStream inputStream) {
 | [TemplateHeaderNormalizer.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/cv/normalizer/TemplateHeaderNormalizer.java) | `infra.cv.normalizer` | Level 2 ACL 標題防腐器，執行標題前置防呆與鍵值正規化 |
 | [ExcelUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/ExcelUtil.java) | `infra.util` | 提供 `readAllSheets(InputStream)` 動態解析工作簿多工作表 |
 | [ExcelValidatorAdapter.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/adapter/ExcelValidatorAdapter.java) | `infra.adapter` | 串接 Level 1 與 Level 2 防腐層並驅動客製驗證核心 |
+| [TemplateSheetMappingController.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/TemplateSheetMappingController.java) | `iface.rest` | 工作表對映 REST 控制器 (支援 OpenAPI 3.0 CRUD 端點) |
+| [TemplateFieldMappingController.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/TemplateFieldMappingController.java) | `iface.rest` | 欄位對映 REST 控制器 (支援 OpenAPI 3.0 CRUD 端點) |
+| [UploadController.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/UploadController.java) | `iface.rest` | 範本檔案上傳控制器 (含 PR_IMPORT Swagger 預設範例與 HTTP 422 檢核回應) |
+| [OpenApiConfig.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/config/OpenApiConfig.java) | `config` | SpringDoc OpenAPI 3.0 全域中繼規格配置 |
+| [WebConfig.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/config/WebConfig.java) | `config` | 表現層 Web 轉換器配置，相容 Swagger UI Multipart 傳輸 |
 | [init-schema.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/init-schema.sql) | 根目錄 | 包含 `template_sheet_mapping` 與 `template_field_mapping` 之 DDL 與測試資料 |
+| [pr-import-init.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/pr-import-init.sql) | 根目錄 | PR 請購單匯入範本專屬 DDL 與對映/檢核策略設定腳本 |
 | [TemplateSheetNormalizerTest.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/test/java/com/example/demo/infra/cv/normalizer/TemplateSheetNormalizerTest.java) | `src/test/java` | 工作表防腐層單元測試 (含完整 Gherkin BDD 規格說明) |
 | [TemplateHeaderNormalizerTest.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/test/java/com/example/demo/infra/cv/normalizer/TemplateHeaderNormalizerTest.java) | `src/test/java` | 標題防腐層單元測試 (含完整 Gherkin BDD 規格說明) |
+| [PrImportValidateTest.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/test/java/com/example/demo/service/PrImportValidateTest.java) | `src/test/java` | PR Import 端到端情境檢核測試套件 |
+
+---
+
+## 九、 OpenAPI 3.0 與表現層 Swagger 註解規格 (OpenAPI & Swagger Annotations)
+
+本模組已全面導入 SpringDoc OpenAPI 3.0 (`springdoc-openapi-starter-webmvc-ui:2.8.5`)，為表現層控制器與所有請求/回應資源（Resources）提供結構化 API 文件與線上互動測試能力。
+
+### 9.1 線上文件端點
+- **Swagger UI 介面**：`http://localhost:8080/swagger-ui/index.html`
+- **OpenAPI 3.0 JSON 規格**：`http://localhost:8080/v3/api-docs`
+
+### 9.2 控制器分群與標註架構
+各 REST 控制器均依循 [AGENTS.md](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/.agents/AGENTS.md) 輸入適配器規範，標註清晰的 `@Tag`、`@Operation`、`@Parameter` 與 `@ApiResponses`：
+
+1. **範本上傳檢核 API ([UploadController](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/UploadController.java))**：
+   - 包含 `@Operation(summary = "上傳並校驗 Excel 範本檔案")`。
+   - `resource` 參數透過 `@ExampleObject` 預設綁定 `PR_IMPORT` 完整 JSON 範例。
+   - 清楚定義 `@ApiResponse`：`200 OK` (成功)、`400 BAD_REQUEST` (參數不合規) 與 `422 UNPROCESSABLE_ENTITY` (Excel 業務檢核失敗)。
+2. **範本工作表對映管理 API ([TemplateSheetMappingController](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/TemplateSheetMappingController.java))**：
+   - 提供工作表對映之建立 (`POST`)、更新 (`PUT`)、單筆查詢 (`GET /{id}`)、清單查詢 (`GET`) 與刪除 (`DELETE /{id}`) 等完整生命週期端點。
+3. **範本欄位對映管理 API ([TemplateFieldMappingController](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/TemplateFieldMappingController.java))**：
+   - 提供欄位標題對映之建立 (`POST`)、更新 (`PUT`)、單筆查詢 (`GET /{id}`)、清單查詢 (`GET`) 與刪除 (`DELETE /{id}`) 等完整生命週期端點。
+
+### 9.3 表現層資源純資料載體 (`resource/`) 之 `@Schema` 註解規範
+所有請求資源（`in/`）與回應資源（`out/`）均已加上 `@Schema` 類別說明與屬性範例：
+
+* **請求載體 (Inbound)**：
+  - [UploadTemplateResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/in/UploadTemplateResource.java)：包含完整的 `PR_IMPORT` 預設值與各欄位用途說明。
+  - [CreateTemplateSheetMappingResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/in/CreateTemplateSheetMappingResource.java) / [UpdateTemplateSheetMappingResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/in/UpdateTemplateSheetMappingResource.java)
+  - [CreateTemplateFieldMappingResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/in/CreateTemplateFieldMappingResource.java) / [UpdateTemplateFieldMappingResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/in/UpdateTemplateFieldMappingResource.java)
+* **回應載體 (Outbound)**：
+  - [BaseExceptionsResponse](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/out/BaseExceptionsResponse.java)：標註 `code` (`VALIDATE_FAILED`) 與批次檢核錯誤清單格式。
+  - [BaseExceptionResponse](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/out/BaseExceptionResponse.java)：標註單筆例外代碼與提示文字。
+  - [TemplateUploadedResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/out/TemplateUploadedResource.java)：標註 `200` 與 `上傳成功` 結構。
+  - [TemplateSheetMappingCreatedResource](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/out/TemplateSheetMappingCreatedResource.java) 等 10 個 CRUD 回應資源，均帶有時間戳記與識別碼範例。

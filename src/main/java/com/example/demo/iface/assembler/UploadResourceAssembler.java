@@ -27,10 +27,10 @@ public class UploadResourceAssembler {
 			return null;
 		}
 		return new UploadTemplateCommand(
-				resource.getName(),
-				resource.getType(),
-				resource.getFileType(),
-				resource.getFilePath(),
-				resource.getFileName());
+				resource.name(),
+				resource.type(),
+				resource.fileType(),
+				resource.filePath(),
+				resource.fileName());
 	}
 }

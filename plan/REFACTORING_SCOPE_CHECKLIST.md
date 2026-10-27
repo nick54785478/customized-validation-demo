@@ -195,9 +195,27 @@
 | `src/main/java/com/example/demo/infra/cv/normalizer/TemplateHeaderNormalizer.java` | **Create** | Mapping | 建立標題防腐層，支援前置標題防呆校驗與鍵值正規化 |
 | `src/main/java/com/example/demo/infra/adapter/ExcelValidatorAdapter.java` | **Modify** | Mapping | 整合工作表與標題雙層對映倉儲與正規化防腐器 |
 | `src/test/java/com/example/demo/infra/cv/normalizer/TemplateSheetNormalizerTest.java` | **Create** | Testing | 建立工作表正規化與防呆單元測試 (含 Gherkin Javadoc) |
-| `src/test/java/com/example/demo/infra/cv/normalizer/TemplateHeaderNormalizerTest.java` | **Create** | Testing | 建立標題正規化與防呆單元測試 (含 Gherkin Javadoc) |
+| `src/main/java/com/example/demo/application/shared/command/*MappingCommand.java` | **Create** | Mapping CRUD | 建立/更新/刪除工作表與欄位對映業務指令 (Java 17 record) |
+| `src/main/java/com/example/demo/application/shared/query/*MappingQuery.java` | **Create** | Mapping CRUD | 單筆與條件搜尋工作表與欄位對映查詢物件 (Java 17 record) |
+| `src/main/java/com/example/demo/application/dto/*Mapping*Result.java` | **Create** | Mapping CRUD | 查詢與搜尋工作表與欄位對映純資料載體 (DTO record) |
+| `src/main/java/com/example/demo/application/port/in/*MappingUseCase.java` | **Create** | Mapping CRUD | 工作表與欄位對映 CRUD 與 Search 之 Inbound Port 介面 |
+| `src/main/java/com/example/demo/application/port/out/*MappingRepositoryPort.java` | **Create** | Mapping CRUD | 工作表與欄位對映持久化 Outbound Port 介面 (零技術物件) |
+| `src/main/java/com/example/demo/application/service/*MappingApplicationService.java` | **Create** | Mapping CRUD | 實作 Inbound Port 之應用層服務 (交易控制與業務校驗) |
+| `src/main/java/com/example/demo/infra/assembler/*MappingDtoAssembler.java` | **Create** | Mapping CRUD | 基礎設施層持久化實體與應用層 DTO 轉換組裝器 |
+| `src/main/java/com/example/demo/infra/adapter/*MappingRepositoryAdapter.java` | **Create** | Mapping CRUD | 實作 Outbound Port 之持久化適配器 (含 JPA Specification 動態搜尋) |
+| `src/main/java/com/example/demo/iface/resource/in/*MappingResource.java` | **Create** | Mapping CRUD | 表現層輸入 Request 資料載體 (純資料物件) |
+| `src/main/java/com/example/demo/iface/resource/out/*Mapping*Resource.java` | **Create** | Mapping CRUD | 表現層輸出 Response 資料載體 (純資料物件) |
+| `src/main/java/com/example/demo/iface/assembler/*MappingResourceAssembler.java` | **Create** | Mapping CRUD | 表現層 Resource 與應用層 Command/Query/Result 防腐組裝器 |
+| `src/main/java/com/example/demo/iface/rest/*MappingController.java` | **Create** | Mapping CRUD | 工作表與欄位對映 REST API 控制器 (POST, PUT, DELETE, GET, Search) |
+| `src/test/java/com/example/demo/application/service/*MappingApplicationServiceTest.java` | **Create** | Testing | 應用服務單元測試 (含 BDD Gherkin Javadoc 規範，共 18 個案例) |
+| `src/test/java/com/example/demo/iface/rest/*MappingControllerTest.java` | **Create** | Testing | 表現層 WebMvc MockMvc 整合測試 (共 12 個案例) |
 | `plan/TEMPLATE_FIELD_MAPPING_DESIGN.md` | **Create/Update** | Mapping | 雙層範本對映防腐機制規格說明書 (Two-Tier Template Mapping Specification) |
+| `plan/PR_IMPORT_IMPLEMENTATION_GUIDE.md` | **Create/Update** | Verification | PR Import 請購單匯入客製驗證實作指南與端到端測試說明 |
+| `src/main/java/com/example/demo/config/OpenApiConfig.java` | **Create** | OpenAPI | SpringDoc OpenAPI 3.0 / Swagger UI 全域中繼規格配置 |
+| `src/main/java/com/example/demo/config/WebConfig.java` | **Create** | OpenAPI | 表現層 Web 轉換器配置，相容 Swagger UI Multipart 傳輸 |
+| `src/main/java/com/example/demo/iface/resource/**/*Resource.java` | **Modify** | OpenAPI | 表現層 18 個 Request/Response 資源全面補齊 `@Schema` 註解 |
 | `src/test/java/com/example/demo/service/ExcelValidateServiceTest.java` | **Modify** | Phase 1, 4 | 更新 import、採用 `ValidationError` 並補齊 Gherkin Javadoc |
+| `src/test/java/com/example/demo/service/PrImportValidateTest.java` | **Create** | Testing | PR Import 請購單批次匯入檢核單元/整合測試套件 (5 個 Gherkin 案例) |
 
 ---
 
