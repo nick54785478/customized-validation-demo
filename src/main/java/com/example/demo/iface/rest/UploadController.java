@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.demo.application.annotation.CustomValidate;
 import com.example.demo.application.exception.ValidationException;
 import com.example.demo.application.service.UploadCommandService;
 import com.example.demo.application.shared.command.UploadTemplateCommand;
@@ -76,6 +77,7 @@ public class UploadController {
 					content = @Content(schema = @Schema(implementation = BaseExceptionsResponse.class))
 			)
 	})
+	@CustomValidate(templateName = "#resource.name")
 	@PostMapping(value = "", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<TemplateUploadedResource> upload(
 			@Parameter(
@@ -108,7 +110,7 @@ public class UploadController {
 			throw new ValidationException("PARAM_INVALID", "上傳之 Excel 檔案不可為空");
 		}
 		UploadTemplateCommand command = uploadResourceAssembler.toCommand(resource);
-		uploadCommandService.upload(command, file);
+		uploadCommandService.upload(command, file.getInputStream());
 		return new ResponseEntity<>(new TemplateUploadedResource("200", "上傳成功"), HttpStatus.OK);
 	}
 }

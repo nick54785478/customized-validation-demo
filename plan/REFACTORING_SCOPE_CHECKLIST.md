@@ -70,6 +70,10 @@
 +│   │   └── UploadResourceAssembler.java (純資料轉換防腐層)
  │   └── rest
  │       └── UploadController.java
++│   └── schedule
++│       └── processor
++│           ├── BatchFileProcessor.java (【批次處理介面】：支援 File 與 InputStream 串流，原生相容 MinIO/S3/SFTP，@CustomValidate 宣告式合約)
++│           └── PrImportFileProcessor.java (【實作處理單元】：請購範本匯入處理器)
  ├── infra (infrastructure)
  │   ├── adapter
  │   │   └── ExcelValidatorAdapter.java
@@ -214,8 +218,14 @@
 | `src/main/java/com/example/demo/config/OpenApiConfig.java` | **Create** | OpenAPI | SpringDoc OpenAPI 3.0 / Swagger UI 全域中繼規格配置 |
 | `src/main/java/com/example/demo/config/WebConfig.java` | **Create** | OpenAPI | 表現層 Web 轉換器配置，相容 Swagger UI Multipart 傳輸 |
 | `src/main/java/com/example/demo/iface/resource/**/*Resource.java` | **Modify** | OpenAPI | 表現層 18 個 Request/Response 資源全面補齊 `@Schema` 註解 |
+| `src/main/java/com/example/demo/application/annotation/CustomValidate.java` | **Create** | Validation AOP | 宣告式客製化 Excel 驗證註解 (支援靜態常數、SpEL 動態表達式與多檔案源探測) |
+| `src/main/java/com/example/demo/iface/aspect/CustomValidationAspect.java` | **Refactor** | Validation AOP | 重構 AOP 為純註解驅動架構，消除硬編碼切點與強轉，守護分層邊界 |
+| `src/test/java/com/example/demo/iface/aspect/CustomValidationAspectTest.java` | **Create** | Testing | 宣告式驗證切面單元/整合測試套件 (含 8 個 Gherkin BDD 案例) |
 | `src/test/java/com/example/demo/service/ExcelValidateServiceTest.java` | **Modify** | Phase 1, 4 | 更新 import、採用 `ValidationError` 並補齊 Gherkin Javadoc |
 | `src/test/java/com/example/demo/service/PrImportValidateTest.java` | **Create** | Testing | PR Import 請購單批次匯入檢核單元/整合測試套件 (5 個 Gherkin 案例) |
+| `src/main/java/com/example/demo/iface/schedule/processor/BatchFileProcessor.java` | **Create** | Inbound Adapter | 通用批次檔案與串流處理介面 (宣告式 @CustomValidate 合約，支援 File 與 InputStream) |
+| `src/main/java/com/example/demo/iface/schedule/processor/PrImportFileProcessor.java` | **Create** | Inbound Adapter | PR 請購匯入批次處理器 (實作 BatchFileProcessor，支援 MinIO/S3 串流與本機實體檔) |
+| `src/test/java/com/example/demo/iface/schedule/processor/PrImportFileProcessorTest.java` | **Create** | Testing | 批次處理器單元測試套件 (含 5 個 Gherkin BDD 案例，涵蓋本機檔案與 MinIO 串流檢核) |
 
 ---
 

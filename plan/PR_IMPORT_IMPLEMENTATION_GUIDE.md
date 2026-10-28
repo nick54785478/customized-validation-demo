@@ -191,7 +191,9 @@ public class UploadPrApplicationService {
 * **HTTP Method**：`POST`
 * **Request URL**：`/api/v1/upload` (例如 `http://localhost:8080/api/v1/upload`)
 * **Content-Type**：`multipart/form-data`
+* **宣告式驗證註解**：[`@CustomValidate(templateName = "#resource.name")`](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/application/annotation/CustomValidate.java)
 * **Controller**：[UploadController](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/UploadController.java)
+* **驗證攔截切面**：[CustomValidationAspect](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/aspect/CustomValidationAspect.java)
 
 #### 2. Request Data 參數結構 (Multipart Form-Data)
 
@@ -352,6 +354,25 @@ const uploadPrExcel = async (fileBlob) => {
     ]
   }
   ```
+
+---
+
+#### 5. 批次檔案與物件儲存串流處理適配器 (Batch File & Stream Processor with @CustomValidate)
+
+除了 REST API 之外，六角形架構支援非 HTTP 管道的批次處理（如自 MinIO / S3 物件儲存拉取串流、SFTP 檔案或批次任務）。系統透過抽象介面 [BatchFileProcessor](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/schedule/processor/BatchFileProcessor.java) 與具體實作 [PrImportFileProcessor](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/schedule/processor/PrImportFileProcessor.java)，提供高度彈性且支援二進位串流的宣告式檢核架構：
+
+* **核心抽象與處理器實作**：
+  * **抽象合約 [BatchFileProcessor](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/schedule/processor/BatchFileProcessor.java)**：定義 `getTemplateName()`、`supports(File)`，並在介面方法宣告式掛載檢核合約：
+    * `void processFile(File excelFile)`：支援實體檔案路徑處理。
+    * `void processStream(InputStream inputStream)`：支援 MinIO / S3 物件儲存直接讀取之輸入串流，免除落地硬碟暫存之 I/O 負擔。
+  * **請購匯入適配器 [PrImportFileProcessor](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/schedule/processor/PrImportFileProcessor.java)**：實作 `BatchFileProcessor`，專注於組裝請購命令並調用核心應用層 [UploadCommandService](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/application/service/UploadCommandService.java)。
+
+* **MinIO / S3 串流與檔案處理流程**：
+  1. **獲取串流或檔案**：外部排程或事件監聽器自 MinIO (`minioClient.getObject(...)`) 或檔案系統取得 Excel 資料。
+  2. **宣告式校驗**：呼叫 `processor.processStream(inputStream)` 或 `processor.processFile(file)`。
+  3. **AOP 動態攔截**：[CustomValidationAspect](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/aspect/CustomValidationAspect.java) 自動提取傳入之串流或檔案，調用 [ValidateExcelUseCase](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/application/port/in/ValidateExcelUseCase.java) 進行校驗。
+  4. **錯誤攔截**：若檢核不通過，切面拋出 `ExcelValidationException`，阻擋核心應用層入庫。
+  5. **入庫執行**：檢核通過後，自動將可重讀之串流傳遞至應用層 [UploadCommandService](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/application/service/UploadCommandService.java)，達成純淨架構。
 
 ---
 

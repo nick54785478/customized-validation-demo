@@ -43,4 +43,16 @@ public class ExcelValidationException extends RuntimeException {
 	public List<ValidationError> getVepList() {
 		return errors;
 	}
+
+	/**
+	 * 取得所有檢核錯誤訊息文字清單
+	 *
+	 * @return 錯誤訊息文字清單
+	 */
+	public List<String> getValidationMessages() {
+		if (errors == null) {
+			return List.of();
+		}
+		return errors.stream().map(ValidationError::message).toList();
+	}
 }
