@@ -20,18 +20,25 @@
   - [2. 宣告式註解驗證機制 (@CustomValidate)](#2-宣告式註解驗證機制-customvalidate)
   - [3. 多端適配處理器 (REST 上傳與 MinIO/S3 串流批次)](#3-多端適配處理器-rest-上傳與-minios3-串流批次)
   - [4. 純資料載體與防腐組裝器 (ACL Assembler)](#4-純資料載體與防腐組裝器-acl-assembler)
-- [三、 系統架構與分層目錄](#三-系統架構與分層目錄)
-- [四、 快速開始 (Quick Start)](#四-快速開始-quick-start)
+  - [5. SpEL 內建擴充函式庫與動態集合運算 (ValidationUtil & VariableUtil)](#5-spel-內建擴充函式庫與動態集合運算-validationutil--variableutil)
+- [三、 推薦應用場景 (Recommended Application Scenarios)](#三-推薦應用場景-recommended-application-scenarios)
+  - [1. 供應鏈與採購/請購批次匯入 (SCM / ERP: PR & PO Import)](#1-供應鏈與採購請購批次匯入-scm--erp-pr--po-import)
+  - [2. 雲原生無狀態批次排程與物件儲存串流 (Cloud-Native Stream Batch: MinIO / AWS S3)](#2-雲原生無狀態批次排程與物件儲存串流-cloud-native-stream-batch-minio--aws-s3)
+  - [3. 多租戶 / 多系統異質資料整合同步 (B2B Data Hub & Legacy System Migration)](#3-多租戶--多系統異質資料整合同步-b2b-data-hub--legacy-system-migration)
+  - [4. 財務核銷與動態數學公式計算 (Finance & Accounting: 報銷、薪資、對帳單)](#4-財務核銷與動態數學公式計算-finance--accounting-報銷薪資對帳單)
+  - [5. 前後端分離之防禦式 Web API 入口 (Portal Web API Defense)](#5-前後端分離之防禦式-web-api-入口-portal-web-api-defense)
+- [四、 系統架構與分層目錄](#四-系統架構與分層目錄)
+- [五、 快速開始 (Quick Start)](#五-快速開始-quick-start)
   - [環境需求](#環境需求)
   - [資料庫初始化](#資料庫初始化)
   - [構建與執行測試](#構建與執行測試)
   - [啟動應用程式](#啟動應用程式)
-- [五、 使用指南與程式碼範例](#五-使用指南與程式碼範例)
+- [六、 使用指南與程式碼範例](#六-使用指南與程式碼範例)
   - [1. REST API 上傳檢核](#1-rest-api-上傳檢核)
   - [2. 實作 MinIO / S3 串流批次處理器](#2-實作-minio--s3-串流批次處理器)
   - [3. 雙層對映規則配置 (Sheet & Field Mapping)](#3-雙層對映規則配置-sheet--field-mapping)
-- [六、 測試規範與驗證成果](#六-測試規範與驗證成果)
-- [七、 相關設計規格文件](#七-相關設計規格文件)
+- [七、 測試規範與驗證成果](#七-測試規範與驗證成果)
+- [八、 相關設計規格文件](#八-相關設計規格文件)
 
 ---
 
@@ -115,7 +122,56 @@
 
 ---
 
-## 三、 系統架構與分層目錄
+## 三、 推薦應用場景 (Recommended Application Scenarios)
+
+本模組憑藉「**雙層防腐正規化（Two-Tier Normalization）**」、「**非侵入式宣告切面（`@CustomValidate`）**」、「**零落地串流批次處理（Stream-First Batch）**」與「**資料庫動態 SpEL 規則熱插拔（Zero-Downtime Rule Hot-Swap）**」四大架構支柱，特別推薦應用於以下五大企業級核心業務情境：
+
+### 1. 供應鏈與採購/請購批次匯入 (SCM / ERP: PR & PO Import)
+- **典型情境**：
+  - 各事業群或外部供應商提供的 Excel 欄位命名各異（如「請購單號」vs「PR編號」vs「單據號碼」）。
+  - 單一 Excel 包含表頭與明細多個工作表（如 `PO_HEADER` 與 `PO_ITEM`），明細單號必須存在於主表（跨工作表外鍵約束）。
+  - 單據內部明細項次或物料號碼嚴禁重複。
+- **模組落地價值**：
+  - **別名免改檔**：透過 `template_sheet_mapping` 與 `template_field_mapping` 動態配置別名，免除外部供應商改動 Excel 格式的溝通成本。
+  - **跨表動態關聯**：利用 SpEL 配合 `#toSet(#sheet, 'poNo')` 於記憶體投影主檔外鍵，子表直接以 `#headerPoNos.contains(#checkedValue)` 進行母子單關聯防呆。
+  - **防重複與雙向標記**：調用 `#validateDuplicate(#sheet, 'itemNo')` 精準抓出重複儲存格列號。
+
+### 2. 雲原生無狀態批次排程與物件儲存串流 (Cloud-Native Stream Batch: MinIO / AWS S3)
+- **典型情境**：
+  - 微服務或批次排程運行於 Kubernetes / Docker 容器環境中，Pod 磁碟空間有限，且多個 Pod 同時寫入本機暫存檔易造成磁碟 I/O 阻塞或檔案殘留。
+  - 排程器定時從 MinIO、AWS S3 或 SFTP 監聽檔案抵達事件，並啟動大量資料校驗。
+- **模組落地價值**：
+  - **純串流零磁碟落地**：實作 [BatchFileProcessor.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/schedule/processor/BatchFileProcessor.java) 的 `processStream(InputStream)`，直接自 S3 / MinIO 取得 byte stream 進行記憶體內校驗，符合 12-Factor 無狀態設計。
+  - **串流防耗損保護**：AOP 切面內部採用 `ByteArrayInputStream` 可重設快取機制，驗證完畢後重置串流指標，確保下游商業邏輯能無損讀取完整檔案。
+
+### 3. 多租戶 / 多系統異質資料整合同步 (B2B Data Hub & Legacy System Migration)
+- **典型情境**：
+  - 資料中台或 B2B 整合平台需對接數十家合作夥伴或多套歷史遺留系統（Legacy Systems），同一業務單據存在十幾種不同欄位命名或格式版本。
+  - 過去每次新增合作夥伴或新版欄位，都必須改寫代碼、重新編譯發版與重啟服務。
+- **模組落地價值**：
+  - **防腐層 (ACL) 隔離技術細節**：外部格式變更在基礎設施防腐層即被正規化為標準鍵值，應用層與領域核心永不被外部多變格式污染。
+  - **零停機熱更新 (Zero Downtime)**：管理人員透過 REST API 即可線上新增工作表別名與欄位對映，規則即時生效，實現「零代碼、免重新部署」的動態整合作業。
+
+### 4. 財務核銷與動態數學公式計算 (Finance & Accounting: 報銷、薪資、對帳單)
+- **典型情境**：
+  - 財務報銷單、供應商對帳單或薪資核算表常有嚴格的橫向多欄位平衡檢核（例如：`含稅金額 == 未稅金額 * (1 + 稅率)`、`應發工資 == 底薪 + 津貼 - 扣減項`）。
+  - Excel 數值經常夾雜負數、小數、貨幣符號或千分位逗號（如 `"1,250,000.50"`），直接轉型易引發 `NumberFormatException` 當機。
+- **模組落地價值**：
+  - **強健數值安全校驗**：內建 `#isNumeric(#checkedValue)` 與 `#isNotNumericWithComma(...)`，以正規表示式安全過濾各類數值型別。
+  - **多欄位 SpEL 公式聯防**：支援在表達式中直接撰寫四則運算與邏輯比對（如 `T(Double).parseDouble(#checkedValue) > 0`）。
+  - **科目代碼即時檢核**：配合 `VARIABLE` 預載最新有效的成本中心或會計科目白名單，自動攔截過期或無效科目。
+
+### 5. 前後端分離之防禦式 Web API 入口 (Portal Web API Defense)
+- **典型情境**：
+  - 企業員工入口網（Portal）或客戶自助上傳平台，使用者上傳錯誤格式或毀損的 Excel 時，傳統系統往往報出不明 500 系統錯誤或堆疊日誌。
+  - 後端控制器充斥著重複的檔案檢查、空值判斷與行號欄號換算程式碼。
+- **模組落地價值**：
+  - **宣告式註解極致解耦**：只需在 Controller 方法掛上 `@CustomValidate(templateName = "...")`，即可自動攔截並校驗上傳檔案，控制器專注於核心呼叫。
+  - **精確至儲存格座標（如 B3、G12）的友善報錯**：回傳格式如 `SheetName : 採購訂單明細, G3 資料檢核發生錯誤，單價必須為大於 0 之數值`，使用者一目了然、迅速修正，大幅降低客服與 IT 運維負擔。
+
+---
+
+## 四、 系統架構與分層目錄
 
 ```
 com.example.demo
@@ -195,7 +251,7 @@ com.example.demo
 
 ---
 
-## 四、 快速開始 (Quick Start)
+## 五、 快速開始 (Quick Start)
 
 ### 環境需求
 - **JDK**: Java 17 或以上版本
@@ -234,7 +290,7 @@ com.example.demo
 
 ---
 
-## 五、 使用指南與程式碼範例
+## 六、 使用指南與程式碼範例
 
 ### 1. REST API 上傳檢核
 
@@ -325,7 +381,7 @@ try (InputStream minioStream = minioClient.getObject(
 
 ---
 
-## 六、 測試規範與驗證成果
+## 七、 測試規範與驗證成果
 
 依據專案規範，所有測試方法皆以 **BDD Gherkin 語法（Feature, Scenario, Given-When-Then）** 進行 Javadoc 註解與情境驗證：
 
@@ -356,7 +412,7 @@ void givenValidExcelStream_whenProcessStream_thenValidationPasses() throws Excep
 
 ---
 
-## 七、 相關設計規格文件
+## 八、 相關設計規格文件
 
 如需查閱深入的設計規格與架構決策演進，請參考 `plan/` 目錄下之詳細說明文件：
 

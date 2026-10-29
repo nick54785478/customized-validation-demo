@@ -46,7 +46,6 @@ import lombok.extern.slf4j.Slf4j;
  * </p>
  */
 @Slf4j
-@Component
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ExcelUtil {
 
