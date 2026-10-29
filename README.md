@@ -104,6 +104,15 @@
 - `N + Ved + Resource`：[TemplateUploadedResource.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/resource/out/TemplateUploadedResource.java)、`TemplateFieldMappingCreatedResource` 等。
 - 全數配置 OpenAPI `@Schema` 繁體中文說明與展示值。
 
+### 5. SpEL 內建擴充函式庫與動態集合運算 (ValidationUtil & VariableUtil)
+
+為消除驗證規則在 SpEL 中寫死繁瑣的全類名反射語法（如 `T(com...Util).method(...)`），驗證核心 [CustomValidator](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/cv/validator/CustomValidator.java) 在初始化上下文時，會透過反射自動掃描並註冊下列兩大基礎設施工具類別的所有公共靜態方法：
+
+| 工具元件 | 架構職責 | SpEL 註冊函式與代表用途 |
+| :--- | :--- | :--- |
+| [ValidationUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/ValidationUtil.java) | **核心驗證規則函數庫** | • `#validateDuplicate(#sheet, 'itemNo')`：整表指定欄位唯一性/防重複檢核，自動定位所有重複儲存格座標。<br>• `#contains(#list, #sheet, 'costCenter')`：整表白名單/代碼清單存在性檢核。<br>• `#isNumeric(#checkedValue)` / `#isNotNumeric(...)`：數值、浮點數與負數格式安全校驗。<br>• `#isNotNumericWithComma(...)`：支援千分位逗號之數值格式校驗。 |
+| [VariableUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/VariableUtil.java) | **動態集合投影與運算庫** | • `#toSet(#sheet, 'poNo')`：將工作表指定欄位動態投影為唯一鍵值 Set，支援跨表外鍵關聯比對。<br>• `#toAdjSet(#sheet, 'itemNo', 'activeFlag')`：依條件（如啟用旗標為 Y）過濾後投影為 Set。<br>• `#toList(#sheet, 'field')`：動態投影為保有順序之 List 清單。<br>• `#diffSet(#s1, #s2)` / `#intersectionSet(#s1, #s2)`：計算兩集合之差集或交集運算。<br>• `#toMap(#sheet, 'keyField', 'valueField')`：將工作表兩欄位動態轉換為鍵值對照 Map。 |
+
 ---
 
 ## 三、 系統架構與分層目錄
@@ -176,7 +185,12 @@ com.example.demo
     │   │   ├── TemplateSheetMapping.java
     │   │   └── ValidationPolicy.java
     │   └── repository                       # Spring Data JPA Repositories
-    └── util                                 # 工具類別 (ExcelUtil, ValidationUtil 等)
+    └── util                                 # 基礎設施工具類別
+        ├── BaseDataTransformer.java         # 舊有通用資料轉換器
+        ├── ExcelAddressParser.java          # 儲存格位址解析器 (行號欄號轉 Excel 座標如 B3)
+        ├── ExcelUtil.java                   # Excel 檔案解析與多工作表讀取
+        ├── ValidationUtil.java              # SpEL 內建自訂檢核函式庫 (唯一性、清單包含、數值)
+        └── VariableUtil.java                # SpEL 集合投影與差集/交集動態運算
 ```
 
 ---

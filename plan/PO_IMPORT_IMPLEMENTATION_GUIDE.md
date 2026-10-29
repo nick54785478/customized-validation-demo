@@ -152,18 +152,43 @@ flowchart TD
 
 ### 4.2 SpEL 核心語法與變數對照表
 
-檢核引擎（[CustomValidator](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/cv/validator/CustomValidator.java)）在評估表達式時，已預先注入以下上下文變數與內建工具函式：
+檢核引擎（[CustomValidator](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/cv/validator/CustomValidator.java)）在初始化評估上下文（`StandardEvaluationContext`）時，已預先注入以下上下文變數，並透過 Java 反射機制自動將 [ValidationUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/ValidationUtil.java) 與 [VariableUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/VariableUtil.java) 的所有靜態方法註冊為 SpEL 全域函式。
 
-| 變數 / 函式 | 說明與取用範例 |
-| :--- | :--- |
-| **`#checkedValue`** | 當前評估之儲存格字串值（如 `"PO-2026-0001"`、`"V1001"`、`"45000"`）。 |
-| **`#sheet`** | 當前工作表之所有資料列集合 (`List<Map<String, String>>`)。 |
-| **`#sheetName`** | 當前工作表外部友善顯示名稱（如 `"採購訂單明細"`）。 |
-| **`#excelAddress`** | 實體 Excel 座標字串（如 `"A2"`、`"D3"`），由列號與欄號動態計算生成。 |
-| **`#isNumeric(...)`** | 內建靜態驗證函式，判定是否為合法數值。 |
-| **`#validateDuplicate(...)`** | 內建靜態驗證函式，檢查指定欄位是否重複，回傳違規行號與訊息。 |
-| **`#contains(...)`** | 內建靜態驗證函式，檢查工作表指定欄位值是否存在於限定集合中。 |
-| **自訂全域變數** | 透過 `rule = 'VARIABLE'` 策略設定的變數名稱，如 `#validVendors`、`#validCurrencies`、`#validUnits`。 |
+#### 1. 上下文環境變數 (Context Variables)
+
+| 變數名稱 | 型態 | 說明與取用範例 |
+| :--- | :--- | :--- |
+| **`#checkedValue`** | `String` | 當前評估之儲存格字串值（如 `"PO-2026-0001"`、`"V1001"`、`"45000"`）。在 ROW 級別規則中由引擎自動更新為當前儲存格內容。 |
+| **`#sheet`** | `List<Map<String, String>>` | 當前工作表之所有已正規化資料列矩陣。 |
+| **`#sheetName`** | `String` | 當前工作表外部友善顯示名稱（如 `"採購訂單明細"`），供錯誤訊息模板使用。 |
+| **`#excelAddress`** | `String` | 實體 Excel 座標字串（如 `"A2"`、`"D3"`），由資料行號與欄位順序自動動態運算生成。 |
+| **自訂全域變數** | `Object` / `Collection` | 透過 `rule = 'VARIABLE'` 策略設定的變數名稱，如 `#validVendors`、`#validCurrencies`、`#validUnits`。 |
+
+#### 2. ValidationUtil 內建資料校驗函式庫 (自動反射註冊)
+
+由 [ValidationUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/ValidationUtil.java) 提供，專注於欄位值格式、邊界、包含性與重複性校驗：
+
+| SpEL 調用函式 | 傳參規格 | 說明與典型使用情境 |
+| :--- | :--- | :--- |
+| **`#validateDuplicate(#sheet, 'fieldName')`** | `(List<Map>, String)` | **整表唯一性檢核**：遍歷工作表，當發現指定欄位有重複值時，記錄首次出現與後續所有重複行號，回傳 `Map<行號, 錯誤訊息>`。 |
+| **`#contains(#checkList, #sheet, 'fieldName')`** | `(List<String>, List<Map>, String)` | **清單存在性檢核**：內部轉為 `HashSet` 以達 $O(1)$ 效率，檢核該欄位值是否皆存在於限定清單內。 |
+| **`#isNumeric(#checkedValue)`** | `(String)` | **數值格式檢核**：使用正則表達式 `^-?[\d]+(\.[\d]+)?$` 安全判斷是否為數值（支援負數與浮點數），避免拋出 `NumberFormatException`。 |
+| **`#isNotNumeric(#checkedValue)`** | `(String)` | **非數值判斷**：等同於 `!#isNumeric(#checkedValue)`。 |
+| **`#isNotNumericWithComma(#checkedValue)`** | `(String)` | **排除千分位之數值判斷**：自動移除逗號（`,`）後判斷是否為數值。 |
+| **`#isInteger(#checkedValue)`** | `(String)` | **整數型別轉換檢核**：嘗試轉換為 32-bit Integer，測試數值是否為有效整數。 |
+
+#### 3. VariableUtil 動態集合運算與投影工具庫 (自動反射註冊)
+
+由 [VariableUtil.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/infra/util/VariableUtil.java) 提供，專注於將工作表在記憶體中投影轉換為各類資料結構，支援跨表關聯與複雜條件集合運算：
+
+| SpEL 調用函式 | 傳參規格 | 說明與典型使用情境 |
+| :--- | :--- | :--- |
+| **`#toSet(#sheet, 'fieldName')`** | `(List<Map>, String)` | **欄位值去重集合**：將指定欄位資料投影為 `LinkedHashSet<String>`，常作為跨工作表外鍵參照的母體清單。 |
+| **`#toAdjSet(#sheet, 'fieldName', 'adjFieldName')`** | `(List<Map>, String, String)` | **條件過濾投影集合**：僅過濾出判定旗標（如 `activeFlag == "Y"`）的資料列，再將目標欄位投影為 `Set`。 |
+| **`#toList(#sheet, 'fieldName')`** | `(List<Map>, String)` | **欄位清單投影**：將工作表指定欄位投影為保有輸入順序與重複值之 `ArrayList<String>`。 |
+| **`#diffSet(#set1, #set2)`** | `(Set, Set)` | **集合差集運算**：計算 `set1 - set2`，快速抓出未存在於基準集合中的違規值。 |
+| **`#intersectionSet(#set1, #set2)`** | `(Set, Set)` | **集合交集運算**：計算 `set1 ∩ set2` 之共同元素集合。 |
+| **`#toMap(#sheet, 'keyField', 'valueField')`** | `(List<Map>, String, String)` | **雙欄位鍵值對照表**：將工作表兩欄位動態組裝為 `Map<Object, Object>`，利於 SpEL 進行鍵查值檢核。 |
 
 ---
 
