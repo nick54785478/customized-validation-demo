@@ -536,8 +536,8 @@ public void validateExcelData(String templateName, InputStream inputStream) {
 | [UploadController.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/iface/rest/UploadController.java) | `iface.rest` | 範本檔案上傳控制器 (含 PR_IMPORT Swagger 預設範例與 HTTP 422 檢核回應) |
 | [OpenApiConfig.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/config/OpenApiConfig.java) | `config` | SpringDoc OpenAPI 3.0 全域中繼規格配置 |
 | [WebConfig.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/main/java/com/example/demo/config/WebConfig.java) | `config` | 表現層 Web 轉換器配置，相容 Swagger UI Multipart 傳輸 |
-| [init-schema.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/init-schema.sql) | 根目錄 | 包含 `template_sheet_mapping` 與 `template_field_mapping` 之 DDL 與測試資料 |
-| [pr-import-init.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/pr-import-init.sql) | 根目錄 | PR 請購單匯入範本專屬 DDL 與對映/檢核策略設定腳本 |
+| [sql/init-schema.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/sql/init-schema.sql) | `sql/` | 包含 `template_sheet_mapping` 與 `template_field_mapping` 之 DDL 與測試資料 |
+| [sql/pr-import-init.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/sql/pr-import-init.sql) | `sql/` | PR 請購單匯入範本專屬 DDL 與對映/檢核策略設定腳本 |
 | [TemplateSheetNormalizerTest.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/test/java/com/example/demo/infra/cv/normalizer/TemplateSheetNormalizerTest.java) | `src/test/java` | 工作表防腐層單元測試 (含完整 Gherkin BDD 規格說明) |
 | [TemplateHeaderNormalizerTest.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/test/java/com/example/demo/infra/cv/normalizer/TemplateHeaderNormalizerTest.java) | `src/test/java` | 標題防腐層單元測試 (含完整 Gherkin BDD 規格說明) |
 | [PrImportValidateTest.java](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/src/test/java/com/example/demo/service/PrImportValidateTest.java) | `src/test/java` | PR Import 端到端情境檢核測試套件 |

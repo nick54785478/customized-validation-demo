@@ -4,7 +4,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Clean Architecture](https://img.shields.io/badge/Architecture-Clean%20%2F%20Hexagonal-blue.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 [![OpenAPI](https://img.shields.io/badge/OpenAPI-3.0%20(SpringDoc)-green.svg)](http://localhost:8080/swagger-ui.html)
-[![Build Status](https://img.shields.io/badge/Build-Passing%20(71%2F71%20Tests)-success.svg)]()
+[![Build Status](https://img.shields.io/badge/Build-Passing%20(81%2F81%20Tests)-success.svg)]()
 
 `customized-validation-module` 是一個專為企業級應用設計的**通用 Excel 宣告式資料驗證與防腐中介模組**。本模組嚴格遵循 **Clean Architecture（六角形架構）** 與 **DDD（領域驅動設計）** 原則，徹底消除外部技術框架對核心業務層的侵入，並提供可高度擴充的**雙層範本對映機制（Two-Tier Template Mapping）**與**宣告式 `@CustomValidate` AOP 驗證切面**。
 
@@ -132,6 +132,7 @@ com.example.demo
 │   └── schedule                             # 批次匯入適配層 (Inbound Batch Adapters)
 │       └── processor
 │           ├── BatchFileProcessor.java      # 宣告式批次介面 (支援 File 與 MinIO/S3 串流)
+│           ├── PoImportFileProcessor.java   # PO 採購訂單匯入實作處理器
 │           └── PrImportFileProcessor.java   # PR 請購匯入實作處理器
 ├── application                              # 應用核心層 (Application Layer)
 │   ├── annotation                           # 驗證宣告註解
@@ -188,9 +189,10 @@ com.example.demo
 - **Database**: MySQL 8.0+ 或 H2 Database（單元測試預設使用 H2 in-memory）
 
 ### 資料庫初始化
-專案根目錄提供標準 SQL 建立與種子資料腳本：
-1. [init-schema.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/init-schema.sql)：初始化基礎資料表與範本驗證原則。
-2. [pr-import-init.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/pr-import-init.sql)：初始化請購單範本（`PR_IMPORT`）的雙層工作表與欄位對映資料。
+專案 `sql/` 目錄集中提供標準 SQL 建立與種子資料腳本：
+1. [sql/init-schema.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/sql/init-schema.sql)：初始化基礎資料表與範本驗證原則。
+2. [sql/pr-import-init.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/sql/pr-import-init.sql)：初始化請購單範本（`PR_IMPORT`）的雙層工作表與欄位對映資料。
+3. [sql/po-import-init.sql](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/sql/po-import-init.sql)：初始化採購訂單範本（`PO_IMPORT`）的雙層工作表與欄位對映資料。
 
 ### 構建與執行測試
 本專案所有單元測試皆採用 **BDD Gherkin 語法**，執行全套測試驗證：
@@ -203,7 +205,7 @@ com.example.demo
 ./mvnw clean test
 ```
 
-> **測試結果**：涵蓋 Web 控制器、AOP 切面、雙層防腐正規化器、批次處理器等，共 71 個測試案例全數通過（`BUILD SUCCESS`）。
+> **測試結果**：涵蓋 Web 控制器、AOP 切面、雙層防腐正規化器、PR/PO 批次處理器等，共 81 個測試案例全數通過（`BUILD SUCCESS`）。
 
 ### 啟動應用程式
 
@@ -327,7 +329,7 @@ void givenValidExcelStream_whenProcessStream_thenValidationPasses() throws Excep
 ```
 
 ### 測試執行指標
-- **總測試案例數**：71
+- **總測試案例數**：81
 - **失敗 (Failures)**：0
 - **錯誤 (Errors)**：0
 - **跳過 (Skipped)**：0
@@ -344,6 +346,7 @@ void givenValidExcelStream_whenProcessStream_thenValidationPasses() throws Excep
 
 如需查閱深入的設計規格與架構決策演進，請參考 `plan/` 目錄下之詳細說明文件：
 
+- [PO_IMPORT_IMPLEMENTATION_GUIDE.md](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/plan/PO_IMPORT_IMPLEMENTATION_GUIDE.md)：採購訂單批次匯入客製驗證實作指南與端到端測試說明。
 - [PR_IMPORT_IMPLEMENTATION_GUIDE.md](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/plan/PR_IMPORT_IMPLEMENTATION_GUIDE.md)：請購單批次匯入客製驗證實作指南與端到端測試說明。
 - [TEMPLATE_FIELD_MAPPING_DESIGN.md](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/plan/TEMPLATE_FIELD_MAPPING_DESIGN.md)：雙層範本對映防腐機制規格說明書 (Two-Tier Template Mapping Specification)。
 - [REFACTORING_SCOPE_CHECKLIST.md](file:///d:/桌面/ModuleWorkSpace/customized-validation-module/plan/REFACTORING_SCOPE_CHECKLIST.md)：架構重構檢核清單與變更對照矩陣。

@@ -73,7 +73,8 @@
 +│   └── schedule
 +│       └── processor
 +│           ├── BatchFileProcessor.java (【批次處理介面】：支援 File 與 InputStream 串流，原生相容 MinIO/S3/SFTP，@CustomValidate 宣告式合約)
-+│           └── PrImportFileProcessor.java (【實作處理單元】：請購範本匯入處理器)
++│           ├── PrImportFileProcessor.java (【實作處理單元】：請購範本匯入處理器)
++│           └── PoImportFileProcessor.java (【實作處理單元】：採購訂單範本匯入處理器)
  ├── infra (infrastructure)
  │   ├── adapter
  │   │   └── ExcelValidatorAdapter.java
@@ -225,7 +226,11 @@
 | `src/test/java/com/example/demo/service/PrImportValidateTest.java` | **Create** | Testing | PR Import 請購單批次匯入檢核單元/整合測試套件 (5 個 Gherkin 案例) |
 | `src/main/java/com/example/demo/iface/schedule/processor/BatchFileProcessor.java` | **Create** | Inbound Adapter | 通用批次檔案與串流處理介面 (宣告式 @CustomValidate 合約，支援 File 與 InputStream) |
 | `src/main/java/com/example/demo/iface/schedule/processor/PrImportFileProcessor.java` | **Create** | Inbound Adapter | PR 請購匯入批次處理器 (實作 BatchFileProcessor，支援 MinIO/S3 串流與本機實體檔) |
-| `src/test/java/com/example/demo/iface/schedule/processor/PrImportFileProcessorTest.java` | **Create** | Testing | 批次處理器單元測試套件 (含 5 個 Gherkin BDD 案例，涵蓋本機檔案與 MinIO 串流檢核) |
+| `src/main/java/com/example/demo/iface/schedule/processor/PoImportFileProcessor.java` | **Create** | Inbound Adapter | PO 採購訂單匯入批次處理器 (實作 BatchFileProcessor，支援 MinIO/S3 串流與本機實體檔) |
+| `src/test/java/com/example/demo/service/PoImportValidateTest.java` | **Create** | Testing | PO Import 採購訂單雙層防腐正規化與客製規則整合測試套件 (5 個 Gherkin 案例) |
+| `src/test/java/com/example/demo/iface/schedule/processor/PoImportFileProcessorTest.java` | **Create** | Testing | PO 採購批次處理器單元測試套件 (含 5 個 Gherkin BDD 案例，涵蓋本機檔案與 MinIO 串流檢核) |
+| `sql/po-import-init.sql` | **Create** | Database | PO 採購訂單匯入雙層防腐對映與 SpEL 驗證原則初始化腳本 |
+| `plan/PO_IMPORT_IMPLEMENTATION_GUIDE.md` | **Create** | Documentation | PO Import 採購訂單批次匯入客製驗證實作指南與規格說明書 |
 
 ---
 
